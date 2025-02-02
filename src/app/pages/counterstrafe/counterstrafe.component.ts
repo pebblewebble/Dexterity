@@ -9,35 +9,46 @@ import { Component, HostListener } from '@angular/core';
 })
 export class CounterstrafeComponent {
   public success: string = '';
+  public timeDiff: number = 0;
+  public pressedKeys: { [key: string]: boolean } = { 'a': false, 'd': false };
   private keyPressTimestamps: { [key: string]: number } = {};
-  private timingWindow: number = 200; // 200 ms timing window
+  private timingWindow: number = 200;
 
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
     const key = event.key.toLowerCase();
+    
+    // Update UI feedback for key press
+    if (key === 'a' || key === 'd') {
+      this.pressedKeys[key] = true;
+    }
+
     const currentTime = Date.now();
-    console.log(currentTime);
-    // Only process 'a' and 'd' keys
     if (key !== 'a' && key !== 'd') return;
 
-    // Check if the opposite key was pressed recently
     const oppositeKey = key === 'a' ? 'd' : 'a';
     const lastOppositeKeyTime = this.keyPressTimestamps[oppositeKey] || 0;
 
     if (lastOppositeKeyTime > 0) {
-      // Check if the opposite key was pressed within the timing window
-      if (currentTime - lastOppositeKeyTime <= this.timingWindow) {
-        this.success = 'Success'; // Successful counter-strafe
-      } else {
-        this.success = 'Fail'; // Too late
-      }
+      this.timeDiff = currentTime - lastOppositeKeyTime;
 
-      // Reset the timestamps after detection
+      if (this.timeDiff <= this.timingWindow) {
+        this.success = 'Success!';
+      } else {
+        this.success = 'Too slow!';
+      }
       this.keyPressTimestamps = {};
     } else {
-      // Store the current key's timestamp
       this.keyPressTimestamps[key] = currentTime;
     }
   }
-} 
+
+  @HostListener('window:keyup', ['$event'])
+  handleKeyUp(event: KeyboardEvent) {
+    const key = event.key.toLowerCase();
+    if (key === 'a' || key === 'd') {
+      this.pressedKeys[key] = false;
+    }
+  }
+}
 

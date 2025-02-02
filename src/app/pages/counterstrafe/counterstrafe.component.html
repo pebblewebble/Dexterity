@@ -1,6 +1,18 @@
-<div>
-    <p>A</p>
-    <p>D</p>
-</div>
-<p>{{success}}</p>
-<!-- <p>{{elapsedTime}}</p> -->
+<div class="container">
+      <div class="key-container">
+        <div class="key" [class.pressed]="pressedKeys['a']">
+          A
+        </div>
+        <div class="key" [class.pressed]="pressedKeys['d']">
+          D
+        </div>
+      </div>
+      <div class="status-container">
+        <p class="status-text">
+          {{ success || 'Press A and D within 200ms' }}
+        </p>
+        <p *ngIf="timeDiff" class="time-text">
+          Time: {{ timeDiff }}ms
+        </p>
+      </div>
+    </div>
