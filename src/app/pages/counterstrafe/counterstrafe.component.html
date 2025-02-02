@@ -8,11 +8,14 @@
         </div>
       </div>
       <div class="status-container">
-        <p class="status-text">
+        <p class="status-text" [class.success]="success === 'Success!'" [class.failure]="success === 'Too slow!'">
           {{ success || 'Press A and D within 200ms' }}
         </p>
-        <p *ngIf="timeDiff" class="time-text">
+        <p  class="time-text" [class.over-time]="timeDiff > 200">
           Time: {{ timeDiff }}ms
+        </p>
+        <p class="velocity-text">
+          Current Velocity: {{ currentVelocity.toFixed(2) }} u/s
         </p>
       </div>
     </div>
