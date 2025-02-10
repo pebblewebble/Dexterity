@@ -81,11 +81,54 @@ export class CounterstrafeComponent {
 
   // Log how many ticks it took to stop
   if (this.startTick !== null && Math.abs(this.currentVelocity) < 0.1) {
-    const ticksToStop = this.tickCounter - this.startTick;
-    console.log(`Counter-strafe complete! Took ${ticksToStop} ticks to reach 0 velocity.`);
-    this.startTick = null; // Reset for next attempt
+      const ticksToStop = this.tickCounter - this.startTick;
+      console.log(`Counter-strafe complete! Took ${ticksToStop} ticks to reach 0 velocity.`);
+      this.startTick = null; // Reset for next attempt
+    }
   }
-} 
+
+  @HostListener('document:mousedown', ['$event'])
+  handleMouseClick(event: MouseEvent) {
+    // Check if we are slowed down enough to shoot relatively accurately
+    // The minimum speed was found in this video which is like 9 years old but probably still the same
+    // https://www.youtube.com/watch?v=ZgjYxBRuagA
+    if (event.button === 0) {
+      const container = document.querySelector(".container");
+      if (!container) {
+        return;
+      }
+
+      // Determine if it's a "hit" (accurate shot) or "miss"
+      if (-73 <= this.currentVelocity && this.currentVelocity <= 73) {
+        this.restartAnimation(container, 'hit');
+      } else {
+        this.restartAnimation(container, 'miss');
+      }
+    }
+  }
+
+  /**
+   * Restarts the given animation class on the element. If the class is already present,
+   * it removes it and forces a reflow before adding it back, ensuring the animation is restarted.
+   */
+  restartAnimation(element: Element, animationClass: string) {
+    // Remove the class if it's already applied to restart the animation
+    element.classList.remove(animationClass);
+    console.log(element)
+    // Force a reflow (this resets the CSS animation)
+    const htmlElement=element as HTMLElement;
+
+    void htmlElement.offsetWidth;
+    // Add the animation class
+    element.classList.add(animationClass);
+
+    // Add an event listener to remove the class when the animation finishes
+    const onAnimationEnd = () => {
+      element.classList.remove(animationClass);
+      element.removeEventListener('animationend', onAnimationEnd);
+    };
+    element.addEventListener('animationend', onAnimationEnd);
+  }
 
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
@@ -98,7 +141,7 @@ export class CounterstrafeComponent {
       if (Math.abs(this.currentVelocity) < 0.1) {
         this.currentVelocity = key === 'a' ? -9.24 : 9.24;
       }
-    } 
+    }
 
     const currentTime = Date.now();
     if (key !== 'a' && key !== 'd') return;

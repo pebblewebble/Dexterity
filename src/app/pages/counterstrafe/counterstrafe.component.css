@@ -70,3 +70,23 @@
       color: #fff;
       margin-top: 8px;
     }
+    .container.hit {
+      background-color: #22c55e;
+      animation: fadeOut 1s ease-out forwards;
+    }
+
+    .container.miss {
+      background-color: #ef4444;
+      animation: fadeOut 1s ease-out forwards;
+    }
+
+    /* Keyframes for fading out: from fully visible to invisible */
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
