@@ -2,7 +2,7 @@ import { Component, HostListener } from '@angular/core';
 
 @Component({
   selector: 'app-counterstrafe',
-  // selector: 'app-root',
+  standalone:true,
   imports: [],
   templateUrl: './counterstrafe.component.html',
   styleUrl: './counterstrafe.component.css'
