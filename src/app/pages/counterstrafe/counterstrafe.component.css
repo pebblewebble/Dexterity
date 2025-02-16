@@ -6,6 +6,7 @@
       min-height: 100vh;
       background-color: #1a1a1a;
       padding: 20px;
+      z-index:0;
     }
 
     .key-container {
@@ -83,10 +84,10 @@
     /* Keyframes for fading out: from fully visible to invisible */
     @keyframes fadeOut {
       0% {
-        opacity: 1;
+        background-color:#22c55e;
       }
       100% {
-        opacity: 0;
+        background-color:#ef4444
       }
     }
 

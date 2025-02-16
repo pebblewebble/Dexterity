@@ -1,8 +1,8 @@
 import { Component, HostListener } from '@angular/core';
 
 @Component({
-  // selector: 'app-counterstrafe',
-  selector: 'app-root',
+  selector: 'app-counterstrafe',
+  // selector: 'app-root',
   imports: [],
   templateUrl: './counterstrafe.component.html',
   styleUrl: './counterstrafe.component.css'
@@ -89,23 +89,16 @@ export class CounterstrafeComponent {
 
   @HostListener('document:mousedown', ['$event'])
   handleMouseClick(event: MouseEvent) {
-    // Check if we are slowed down enough to shoot relatively accurately
-    // The minimum speed was found in this video which is like 9 years old but probably still the same
-    // https://www.youtube.com/watch?v=ZgjYxBRuagA
-    if (event.button === 0) {
-      const container = document.querySelector(".container");
-      if (!container) {
-        return;
-      }
-
-      // Determine if it's a "hit" (accurate shot) or "miss"
+    if (event.button === 0) { // left click
+      // Check if we're slowed down enough to shoot accurately (threshold is ±73)
       if (-73 <= this.currentVelocity && this.currentVelocity <= 73) {
-        this.restartAnimation(container, 'hit');
+        this.success = `Hit! (Velocity: ${this.currentVelocity.toFixed(2)})`;
       } else {
-        this.restartAnimation(container, 'miss');
+        this.success = `Miss! (Velocity: ${this.currentVelocity.toFixed(2)})`;
       }
+      console.log(`Shot fired at velocity ${this.currentVelocity}: ${this.success}`);
     }
-  }
+  } 
 
   /**
    * Restarts the given animation class on the element. If the class is already present,
@@ -113,8 +106,9 @@ export class CounterstrafeComponent {
    */
   restartAnimation(element: Element, animationClass: string) {
     // Remove the class if it's already applied to restart the animation
-    element.classList.remove(animationClass);
-    console.log(element)
+    element.classList.remove('hit');
+    element.classList.remove('miss');
+
     // Force a reflow (this resets the CSS animation)
     const htmlElement=element as HTMLElement;
 

@@ -8,7 +8,7 @@
         </div>
       </div>
       <div class="status-container">
-        <p class="status-text" [class.success]="success === 'Success!'" [class.failure]="success === 'Too slow!'">
+        <p class="status-text" [class.success]="success === 'Success!' || success.startsWith('Hit')" [class.failure]="success === 'Too slow!' || success.startsWith('Miss')">
           {{ success || 'Press A and D within 200ms' }}
         </p>
         <p  class="time-text" [class.over-time]="timeDiff > 200">
