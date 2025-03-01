@@ -10,7 +10,6 @@ import { routes } from './app/app.routes';
 //   .catch((err) => console.error(err));
 
 // bootstrapApplication(CounterstrafeComponent).catch((err)=>console.error(err));
-bootstrapApplication(HomeComponent,{
-    providers:[provideRouter(routes)]
-}
-).catch((err)=>console.error(err));
+bootstrapApplication(AppComponent, {
+  providers: [provideRouter(routes)]
+});
