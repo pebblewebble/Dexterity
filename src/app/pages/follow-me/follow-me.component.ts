@@ -20,7 +20,7 @@ export class FollowMeComponent implements OnInit, OnDestroy {
   viewportWidth: number = window.innerWidth * .7;
   line: any;
   lineWidth: number = 1;
-  lineColor: String = "black";
+  lineColor: String = "white";
   startAndEndPoints: Point[] = [];
   pointsArray = Array();
 
