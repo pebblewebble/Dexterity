@@ -1,0 +1,98 @@
+/* follow-me.component.css */
+.container {
+  display:flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.controls {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.control-group label {
+  width: 180px;
+  margin-right: 10px;
+}
+
+.control-group input[type="range"] {
+  flex: 1;
+  margin-right: 10px;
+}
+
+button {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: block;
+  margin: 15px 0;
+}
+
+button:hover {
+  background-color: #3367d6;
+}
+
+.auto-refresh {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.auto-refresh input {
+  margin-right: 10px;
+}
+
+.canvas-container {
+  width: 80vw;
+  height: 80vh;
+  margin: 0 auto;
+  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: white;
+}
+
+
+svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+/* Change cursor when hovering over line */
+svg.hovering {
+  cursor: pointer;
+}
+
+.hover-status {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+}

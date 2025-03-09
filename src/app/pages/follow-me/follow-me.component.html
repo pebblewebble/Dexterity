@@ -1,1 +1,19 @@
-<p>follow-me works!</p>
+<div class="container">
+  <div class="canvas-container">
+    <svg #svgContainer
+      >
+
+      <!-- Draw the main path -->
+      <path [attr.d]="line.path" [attr.stroke]="line.color" [attr.stroke-width]="line.width" fill="none"></path>
+
+      <!-- Visual indicator of start and end points -->
+      <circle *ngFor="let point of startAndEndPoints" [attr.cx]="point.x" [attr.cy]="point.y" r="5" fill="blue">
+      </circle>
+
+      <!-- Optional: Visual indicator of mouse position (for debugging) -->
+      <circle *ngIf="isHoveringLine" [attr.cx]="mousePosition.x" [attr.cy]="mousePosition.y" r="5" fill="red"></circle>
+    </svg>
+
+  </div>
+
+</div>
