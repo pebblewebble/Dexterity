@@ -1,34 +1,60 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-<div class="homepage-container">
-  <!-- Left side text -->
-  <div class="content">
-    <nav class="navbar">
-      <div class="logo">Dexterity App</div>
-    </nav>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <br>
-    <br>
-    <h1>Welcome to my Dexterity App!</h1>
-    <br>
-    <p>
-        This website showcases a curated collection of fun, dexterity-challenging activities
-        designed to test and enhance your skills. Scroll the selections on the right to explore and find your
-        next favorite challenge!
-    </p>
+<div class="homepage-container">
+  <!-- Animated background elements -->
+  <div class="background-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
   </div>
 
-  <!-- Right side image -->
+  <!-- Left side content -->
+  <div class="content">
+    <nav class="navbar">
+      <div class="logo">
+        <span class="logo-text">Dexterity</span>
+        <span class="logo-accent">App</span>
+      </div>
+    </nav>
+
+    <div class="hero-content">
+      <h1 class="headline">Enhance Your <span class="accent">Dexterity</span> Skills</h1>
+      <p class="subheadline">
+        Discover a curated collection of fun, challenging activities designed to test and improve your
+        skills. Explore our challenges and find your next favorite game!
+      </p>
+      <div class="cta-container">
+        <button class="cta-button primary">Get Started</button>
+        <button class="cta-button secondary">Learn More</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right side image gallery -->
   <div class="image-container">
     <div class="frame" routerLink="/counter-strafe">
-        <img src="cs2.jpeg" alt="Decorative Image">
-        <div class="overlay">Counter-Strafe</div>
+      <img src="cs2.jpeg" alt="Counter-Strafe Challenge">
+      <div class="overlay">
+        <div class="overlay-content">
+          <h2>Counter-Strafe</h2>
+          <p>Test your movement precision and timing</p>
+          <span class="explore-btn">Explore</span>
+        </div>
+      </div>
     </div>
     <div class="frame">
-        <img src="shrek.jpg" alt="Decorative Image">
-        <div class="overlay">Counter-Strafe</div>
+      <img src="shrek.jpg" alt="Another Challenge">
+      <div class="overlay">
+        <div class="overlay-content">
+          <h2>Pixel Perfect</h2>
+          <p>Master the art of precise movements</p>
+          <span class="explore-btn">Explore</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-<!-- <router-outlet></router-outlet> -->
+

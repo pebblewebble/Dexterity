@@ -4,8 +4,8 @@ import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-home',
-  standalone:true,
-  imports:[CommonModule,RouterModule],
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
@@ -14,9 +14,9 @@ export class HomeComponent implements OnInit {
   leftImage = 'cs2.jpeg';
   rightImage = 'shrek.jpg';
 
-  // We’ll keep two “sections”:
-  //   currentSection = 0 → wheelRotation = 0   (show right half as “active”)
-  //   currentSection = 1 → wheelRotation = 180 (show left half as “active”)
+  // We'll keep two "sections":
+  //   currentSection = 0 → wheelRotation = 0   (show right half as "active")
+  //   currentSection = 1 → wheelRotation = 180 (show left half as "active")
   wheelRotation = 0;
   currentSection = 0; // Start with 0 or 1 as you prefer
 
@@ -45,10 +45,10 @@ export class HomeComponent implements OnInit {
     const threshold = 50; // pixels needed to count as a swipe
 
     if (deltaY < -threshold) {
-      // Swiped up: move to next “section”
-      this.currentSection = (this.currentSection + 1) % 2; 
+      // Swiped up: move to next "section"
+      this.currentSection = (this.currentSection + 1) % 2;
     } else if (deltaY > threshold) {
-      // Swiped down: move to previous “section”
+      // Swiped down: move to previous "section"
       this.currentSection = (this.currentSection - 1 + 2) % 2;
     }
 
