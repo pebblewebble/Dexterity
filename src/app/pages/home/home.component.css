@@ -64,9 +64,17 @@ body {
 }
 
 @keyframes float {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(30px, 20px) rotate(5deg); }
-  100% { transform: translate(0, 0) rotate(0deg); }
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  50% {
+    transform: translate(30px, 20px) rotate(5deg);
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
 }
 
 /* Navigation */
@@ -122,6 +130,7 @@ body {
   line-height: 1.2;
   margin-bottom: 1.5rem;
   letter-spacing: -0.5px;
+  color: white;
 }
 
 .accent {
@@ -144,15 +153,17 @@ body {
 }
 
 .subheadline {
+  font-family: 'Poppins', sans-serif;
+  color: white;
   font-size: 1.1rem;
   line-height: 1.7;
-  color: #cbd5e1;
   margin-bottom: 2.5rem;
 }
 
 .cta-container {
   display: flex;
   gap: 1rem;
+  position: relative;
 }
 
 .cta-button {
@@ -170,6 +181,7 @@ body {
   background: linear-gradient(90deg, #60a5fa, #a78bfa);
   border: none;
   color: white;
+  transition: all 0.6s ease;
 }
 
 .cta-button.primary:hover {
@@ -177,14 +189,40 @@ body {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-.cta-button.secondary {
+/* Make primary button transparent when secondary button is hovered */
+.cta-button.secondary:hover~.cta-button.primary {
   background: transparent;
   border: 1px solid rgba(203, 213, 225, 0.3);
   color: #cbd5e1;
+  transform: translateY(0);
+  box-shadow: none;
 }
 
-.cta-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
+.cta-button.secondary {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+  color: white;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.cta-button.secondary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  /* Controls the transition speed */
+}
+
+.cta-button.secondary:hover::before {
+  opacity: 1;
 }
 
 /* Right side image gallery */
@@ -219,7 +257,7 @@ body {
 }
 
 .frame:hover {
-  transform: scale(0.98);
+  transform: scale(0.98) ;
 }
 
 .frame:last-child {
@@ -235,6 +273,31 @@ body {
 
 .frame:hover img {
   transform: scale(1.05);
+}
+
+.frame::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 20%;
+  height: 200%;
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%);
+  transform: rotate(30deg);
+  animation: shine 3s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -60%;
+  }
+
+  100% {
+    left: 160%;
+  }
 }
 
 .overlay {
@@ -264,24 +327,34 @@ body {
   transform: translateY(0);
 }
 
+.frame:hover .overlay-content h2,
+.frame:hover .overlay-content p {
+  opacity: 1;
+}
+
 .overlay-content h2 {
   font-family: 'Poppins', sans-serif;
   font-size: 1.8rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: white;
+  opacity: .5;
 }
 
 .overlay-content p {
+  font-family: 'Poppins', sans-serif;
   font-size: 1rem;
-  color: #cbd5e1;
+  color: white;
   margin-bottom: 1rem;
+  opacity: .5;
 }
 
 .explore-btn {
   display: inline-block;
+  font-family: 'Poppins', sans-serif;
   font-weight: 500;
-  color: #60a5fa;
-  background: rgba(96, 165, 250, 0.1);
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
   border: 1px solid rgba(96, 165, 250, 0.3);
@@ -289,7 +362,8 @@ body {
 }
 
 .explore-btn:hover {
-  background: rgba(96, 165, 250, 0.2);
+  /* background: rgba(96, 165, 250, 0.2); */
+  transform:translateX(10px);
 }
 
 /* Responsive adjustments */
