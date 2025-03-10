@@ -29,7 +29,7 @@ export class FollowMeComponent implements OnInit, OnDestroy {
 
   mousePosition: Point = { x: 0, y: 0 }
   isHoveringLine: boolean = false;
-  hoverThreshold: number = 5;
+  hoverThreshold: number = 7;
 
   started: boolean = false;
   hoveredStart: boolean = false;
@@ -214,6 +214,7 @@ export class FollowMeComponent implements OnInit, OnDestroy {
         // If player already hovered over end rectangle before start
         if (this.started && this.hoveredEnd) {
           this.score++;
+          this.started=false;
           console.log("HELLO")
           this.hoveredEnd = false; // Reset for next sequence
         }
@@ -226,6 +227,7 @@ export class FollowMeComponent implements OnInit, OnDestroy {
         if (this.started && this.hoveredStart) {
           this.score++;
           console.log("HELLO")
+          this.started=false;
           this.hoveredStart = false; // Reset for next sequence
         }
       }
