@@ -148,8 +148,8 @@ html{
 
 .score h2 {
   font-family: 'Inter', sans-serif;
-  background-color: #1a1a1a;
+  background-color: transparent;
   /* color: #cfbbaf; */
-  color:plum;
+  color:#d3d3d3;
   margin: 0px !important;
 }

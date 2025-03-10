@@ -15,6 +15,8 @@ interface Point {
 })
 export class FollowMeComponent implements OnInit, OnDestroy {
   @ViewChild('svgContainer') svgContainer !: ElementRef;
+  @ViewChild('startPoint') startPoint !: ElementRef;
+  @ViewChild('endPoint') endPoint !: ElementRef;
   maxPoints: number = 5;
   viewportHeight: number = window.innerHeight * .7;
   viewportWidth: number = window.innerWidth * .7;
@@ -23,11 +25,19 @@ export class FollowMeComponent implements OnInit, OnDestroy {
   lineColor: String = "white";
   startAndEndPoints: Point[] = [];
   pointsArray = Array();
-  score:number = 0;
+  score: number = 0;
 
   mousePosition: Point = { x: 0, y: 0 }
   isHoveringLine: boolean = false;
   hoverThreshold: number = 5;
+
+  started: boolean = false;
+  hoveredStart: boolean = false;
+  hoveredEnd: boolean = false;
+
+  // Just realized I didn't even needed to check if the player is hovering over line
+  // when I can just check if it starts with either of the points and if the mouse hovers over
+  // the svg container that means that aren't hovering over the line
 
   ngOnInit(): void {
     this.generateRandomLine();
@@ -183,7 +193,6 @@ export class FollowMeComponent implements OnInit, OnDestroy {
 
     if (this.isHoveringLine) {
       console.log('Hovering over curved line!');
-      // Add your hover effect or action here
     }
   }
   @HostListener('window:resize', ['$event'])
@@ -196,6 +205,34 @@ export class FollowMeComponent implements OnInit, OnDestroy {
   onMouseMove(event: MouseEvent) {
     // Get the bounding rectangle of the SVG container
     const rect = this.svgContainer.nativeElement.getBoundingClientRect();
+    const rectStart = this.startPoint.nativeElement.getBoundingClientRect();
+    const rectEnd = this.endPoint.nativeElement.getBoundingClientRect();
+    if (this.isMouseOverElement(event, rectStart)) {
+      if (!this.hoveredStart) {
+        this.hoveredStart = true;
+
+        // If player already hovered over end rectangle before start
+        if (this.started && this.hoveredEnd) {
+          this.score++;
+          console.log("HELLO")
+          this.hoveredEnd = false; // Reset for next sequence
+        }
+      }
+    } else if (this.isMouseOverElement(event, rectEnd)) {
+      if (!this.hoveredEnd) {
+        this.hoveredEnd = true;
+
+        // If player already hovered over start rectangle before end
+        if (this.started && this.hoveredStart) {
+          this.score++;
+          console.log("HELLO")
+          this.hoveredStart = false; // Reset for next sequence
+        }
+      }
+    }
+    if (this.isMouseOverElement(event, rectStart) || this.isMouseOverElement(event, rectEnd)) {
+      this.started = true;
+    }
 
     // Calculate mouse position relative to the SVG
     this.mousePosition = {
@@ -203,7 +240,22 @@ export class FollowMeComponent implements OnInit, OnDestroy {
       y: event.clientY - rect.top
     };
 
-    // Check if mouse is near the line
     this.checkHoverLine();
+
+    if (this.started && !this.isHoveringLine) {
+      this.hoveredStart = false;
+      this.hoveredEnd = false;
+      this.started = false;
+      this.score = 0;
+      this.generateRandomLine();
+    }
+  }
+  private isMouseOverElement(event: MouseEvent, elementRect: DOMRect): boolean {
+    return (
+      event.clientX >= elementRect.left &&
+      event.clientX <= elementRect.right &&
+      event.clientY >= elementRect.top &&
+      event.clientY <= elementRect.bottom
+    );
   }
 }
