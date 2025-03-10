@@ -23,6 +23,7 @@ export class FollowMeComponent implements OnInit, OnDestroy {
   lineColor: String = "white";
   startAndEndPoints: Point[] = [];
   pointsArray = Array();
+  score:number = 0;
 
   mousePosition: Point = { x: 0, y: 0 }
   isHoveringLine: boolean = false;
