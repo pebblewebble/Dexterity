@@ -17,7 +17,7 @@ export class FollowMeComponent implements OnInit, OnDestroy {
   @ViewChild('svgContainer') svgContainer !: ElementRef;
   @ViewChild('startPoint') startPoint !: ElementRef;
   @ViewChild('endPoint') endPoint !: ElementRef;
-  maxPoints: number = 5;
+  maxPoints: number = 2;
   viewportHeight: number = window.innerHeight * .7;
   viewportWidth: number = window.innerWidth * .7;
   line: any;
@@ -192,7 +192,7 @@ export class FollowMeComponent implements OnInit, OnDestroy {
     this.isHoveringLine = distance <= this.hoverThreshold;
 
     if (this.isHoveringLine) {
-      console.log('Hovering over curved line!');
+      // console.log('Hovering over curved line!');
     }
   }
   @HostListener('window:resize', ['$event'])
@@ -213,10 +213,12 @@ export class FollowMeComponent implements OnInit, OnDestroy {
 
         // If player already hovered over end rectangle before start
         if (this.started && this.hoveredEnd) {
+          this.generateRandomLine();
           this.score++;
           this.started=false;
           console.log("HELLO")
           this.hoveredEnd = false; // Reset for next sequence
+          return;
         }
       }
     } else if (this.isMouseOverElement(event, rectEnd)) {
@@ -225,10 +227,12 @@ export class FollowMeComponent implements OnInit, OnDestroy {
 
         // If player already hovered over start rectangle before end
         if (this.started && this.hoveredStart) {
+          this.generateRandomLine();
           this.score++;
           console.log("HELLO")
           this.started=false;
           this.hoveredStart = false; // Reset for next sequence
+          return;
         }
       }
     }
