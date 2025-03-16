@@ -22,6 +22,7 @@ export class FastHandsComponent implements OnInit {
   private ants: AntWithText[] = [];
   private antsMovementSpeed: number = 1;
   private tickCounter: number = 0;
+  private antCounter: number = 0;
 
   // Keyboard state tracking
   private keysPressed: { [key: string]: boolean } = {};
@@ -42,28 +43,6 @@ export class FastHandsComponent implements OnInit {
   // Typing feedback properties
   private typingFeedback!: Text;
   private feedbackTimeout: any;
-
-  // Word categories for different themes
-  private wordCategories = {
-    // Ant and insect related words
-    insects: [
-      'ant', 'crawl', 'colony', 'queen', 'worker', 'soldier', 'tunnel',
-      'scout', 'forage', 'larva', 'pupa', 'swarm', 'march', 'hill',
-      'nest', 'eggs', 'trail', 'raid', 'team', 'build'
-    ],
-    // Action words
-    actions: [
-      'move', 'carry', 'lift', 'search', 'find', 'gather', 'collect',
-      'store', 'climb', 'dig', 'defend', 'attack', 'follow', 'lead',
-      'scent', 'signal', 'feed', 'grow', 'work', 'rest'
-    ],
-    // Descriptive words
-    descriptors: [
-      'tiny', 'small', 'quick', 'busy', 'strong', 'smart', 'brave',
-      'tireless', 'hungry', 'clever', 'mighty', 'agile', 'social',
-      'organized', 'diligent', 'patient', 'determined', 'focused'
-    ]
-  };
 
   constructor() {
     setInterval(() => this.simulateTick(), 50);
@@ -535,6 +514,8 @@ export class FastHandsComponent implements OnInit {
       },
     });
 
+    text.zIndex = 1000 - this.antCounter;
+
     this.gameContainer.addChild(text);
 
     const antWithText: AntWithText = {
@@ -542,9 +523,11 @@ export class FastHandsComponent implements OnInit {
       text: text,
       word: word
     };
+    antWithText.text.anchor.set(0.5, Math.random() * 1);
 
     this.updateTextPosition(antWithText);
     this.ants.push(antWithText);
+    this.antCounter++;
   }
 
   updateTextPosition(antObj: AntWithText) {
@@ -552,7 +535,6 @@ export class FastHandsComponent implements OnInit {
     const antCenterX = antObj.ant.x + (antObj.ant.width / 2) * (antObj.ant.scale.x < 0 ? -1 : 1);
 
     // Set text anchor point
-    antObj.text.anchor.set(0.5, 1);
     antObj.text.x = antCenterX;
     antObj.text.y = antObj.ant.y - 10; // Position slightly higher than before
 
@@ -719,4 +701,115 @@ export class FastHandsComponent implements OnInit {
     this.textVisibilityDistance = visibilityDistance;
   }
 
+  // Word categories for different themes
+  private wordCategories = {
+    // Short words (3-4 letters) - Quick typing practice
+    shortWords: [
+      'ant', 'egg', 'dig', 'run', 'red', 'big', 'hot', 'wet', 'fast', 'tiny',
+      'hill', 'nest', 'bit', 'bug', 'ram', 'cpu', 'net', 'key', 'tap', 'cut',
+      'pin', 'log', 'sum', 'map', 'bat', 'bin', 'tag', 'car', 'cat', 'dog',
+      'dot', 'ear', 'fan', 'gap', 'hen', 'ink', 'jar', 'kit', 'lip', 'mix',
+      'nap', 'oak', 'pop', 'quit', 'raw', 'sad', 'tan', 'use', 'van', 'win'
+    ],
+
+    // Medium words (5-7 letters) - Balanced difficulty
+    mediumWords: [
+      'colony', 'worker', 'tunnel', 'scent', 'swarm', 'brave', 'clever',
+      'search', 'signal', 'forage', 'defend', 'focused', 'binary', 'server',
+      'method', 'buffer', 'thread', 'script', 'hacker', 'module', 'python',
+      'syntax', 'packet', 'memory', 'branch', 'syntax', 'object', 'pointer',
+      'vector', 'entity', 'sprite', 'object', 'backup', 'socket', 'global',
+      'static', 'random', 'kernel', 'output', 'system', 'program', 'source',
+      'token', 'nested', 'linked', 'assign', 'toggle', 'branch', 'export'
+    ],
+
+    // Long words (8+ letters) - Advanced typing challenge
+    longWords: [
+      'organized', 'determined', 'courageous', 'resourceful', 'perseverance',
+      'communication', 'coordination', 'navigation', 'pheromone', 'competition',
+      'camouflage', 'algorithm', 'recursion', 'framework', 'interface',
+      'encryption', 'debugging', 'networking', 'cybersecurity', 'compilation',
+      'multithreading', 'optimization', 'parallelism', 'virtualization',
+      'serialization', 'decomposition', 'inheritance', 'polymorphism',
+      'asynchronous', 'synchronization', 'abstraction', 'serialization',
+      'deserialization', 'normalization', 'computerized', 'computational',
+      'subroutine', 'artificial', 'concurrency', 'transmission', 'hyperlinked',
+      'cryptography', 'binarytree', 'hashfunction', 'backtracking', 'simulating',
+      'mathematical', 'blockchains', 'cryptosystem'
+    ],
+
+    // Common words - Everyday words that are familiar
+    commonWords: [
+      'team', 'move', 'carry', 'build', 'find', 'rest', 'fast', 'work', 'help',
+      'search', 'path', 'open', 'close', 'name', 'value', 'input', 'error',
+      'save', 'load', 'create', 'edit', 'delete', 'view', 'access', 'login',
+      'logout', 'click', 'scroll', 'type', 'paste', 'copy', 'file', 'folder',
+      'home', 'start', 'stop', 'pause', 'resume', 'share', 'send', 'email',
+      'read', 'write', 'print', 'scan', 'play', 'pause', 'repeat', 'upload',
+      'download', 'connect'
+    ],
+
+    // Uncommon words - Words that might be tricky to spell or less familiar
+    uncommonWords: [
+      'meticulous', 'instinct', 'strategy', 'predator', 'pheromone',
+      'industrious', 'camouflage', 'agility', 'tireless', 'diligent',
+      'efficiency', 'heuristic', 'synchronous', 'asynchronous', 'optimization',
+      'modularity', 'scalability', 'latency', 'anomaly', 'deduplication',
+      'hashing', 'serialization', 'quantization', 'probability', 'efficacy',
+      'pseudo', 'sandboxing', 'entropy', 'checksum', 'diagnostics',
+      'middleware', 'provisioning', 'deployment', 'redundancy', 'compression',
+      'dedicated', 'iteration', 'lambda', 'multiplexer', 'decryption',
+      'vectorization', 'convolution', 'broadcasting', 'deadlock', 'mutex',
+      'parallelism', 'concatenation', 'canonicalization'
+    ],
+
+    // Verbs - Action-based words for dynamic typing
+    actionWords: [
+      'move', 'carry', 'lift', 'search', 'find', 'gather', 'store', 'climb',
+      'dig', 'defend', 'attack', 'follow', 'lead', 'signal', 'grow', 'work',
+      'rest', 'analyze', 'compute', 'debug', 'execute', 'iterate', 'encrypt',
+      'decrypt', 'compile', 'render', 'transmit', 'encode', 'decode', 'generate',
+      'configure', 'simulate', 'emulate', 'resolve', 'initialize', 'terminate',
+      'trigger', 'download', 'upload', 'backup', 'restore', 'compress',
+      'decompress', 'parse', 'crawl', 'scrape', 'register', 'authorize'
+    ],
+
+    // Adjectives - Words that describe ants and their behavior
+    descriptiveWords: [
+      'tiny', 'quick', 'busy', 'strong', 'smart', 'brave', 'clever', 'mighty',
+      'agile', 'social', 'organized', 'diligent', 'patient', 'determined',
+      'focused', 'tireless', 'hungry', 'efficient', 'adaptive', 'persistent',
+      'industrious', 'logical', 'robust', 'resilient', 'calculative', 'verbose',
+      'methodical', 'structured', 'versatile', 'innovative', 'consistent',
+      'proactive', 'strategic', 'autonomous', 'progressive', 'scalable',
+      'systematic', 'cautious', 'tactical', 'persistent', 'iterative',
+      'intuitive', 'fault-tolerant', 'analytical', 'heuristic', 'streamlined'
+    ],
+
+    // Scientific terms - More challenging words for advanced players
+    scientificTerms: [
+      'pheromone', 'entomology', 'exoskeleton', 'mandible', 'antenna',
+      'metamorphosis', 'hemolymph', 'colony', 'queen', 'larva', 'pupa',
+      'instinct', 'navigation', 'symbiosis', 'ecosystem', 'biomimicry',
+      'genetics', 'mutation', 'hormones', 'neurology', 'cognition',
+      'mechanoreceptors', 'photosynthesis', 'respiration', 'hormonal',
+      'subspecies', 'anatomy', 'morphology', 'taxonomy', 'kinetics',
+      'catalyst', 'enzymes', 'osmosis', 'diffusion', 'epigenetics',
+      'homeostasis', 'bioinformatics', 'nanotechnology', 'quantum',
+      'bioluminescence', 'electromagnetism', 'geophysics', 'astrophysics',
+      'cryogenics', 'radioactivity', 'spectroscopy', 'cytogenetics'
+    ],
+
+    // Computer Science terms - Essential CS vocabulary
+    computerScienceTerms: [
+      'algorithm', 'recursion', 'framework', 'interface', 'encryption',
+      'debugging', 'compiler', 'interpreter', 'syntax', 'variable', 'function',
+      'pointer', 'database', 'iteration', 'bitwise', 'protocol', 'runtime',
+      'metadata', 'dependency', 'inheritance', 'abstraction', 'polymorphism',
+      'concatenation', 'serialization', 'decomposition', 'parallelism',
+      'deadlock', 'mutex', 'hashmap', 'bigO', 'caching', 'virtualization',
+      'blockchain', 'containerization', 'cryptography', 'loadbalancer',
+      'datawarehouse', 'microservices', 'fullstack', 'singleton', 'backpropagation'
+    ]
+  };
 }
