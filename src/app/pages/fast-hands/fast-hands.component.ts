@@ -20,7 +20,7 @@ export class FastHandsComponent implements OnInit {
   private playerIdleAnimation!: AnimatedSprite;
   private antSpriteSheet!: Spritesheet;
   private ants: AntWithText[] = [];
-  private antsMovementSpeed: number = 1;
+  private antsMovementSpeed: number = .5;
   private tickCounter: number = 0;
   private antCounter: number = 0;
 
@@ -219,13 +219,11 @@ export class FastHandsComponent implements OnInit {
         // Check if the word is complete
         if (activeAnt.word.length == 0) {
           this.showTypingFeedback('✓', 0x00FF00, 800); // Green checkmark, longer display
-
+          this.focusedWordContainer.visible = false; // Hide the container explicitly
           // Remove the ant
-          setTimeout(() => {
-            this.removeAnt(this.activeAntIndex);
-            this.currentTypingWord = '';
-            this.activeAntIndex = -1;
-          }, 100);
+          this.removeAnt(this.activeAntIndex);
+          this.currentTypingWord = '';
+          this.activeAntIndex = -1;
         }
       } else {
         // No longer matches
@@ -666,7 +664,7 @@ export class FastHandsComponent implements OnInit {
       text: text,
       word: word
     };
-    antWithText.text.anchor.set(0.5,Math.random()*1);
+    antWithText.text.anchor.set(0.5, Math.random() * 1);
 
     this.updateTextPosition(antWithText);
     this.ants.push(antWithText);
@@ -780,7 +778,7 @@ export class FastHandsComponent implements OnInit {
       }
 
       // Check if ant is too close to the player
-      if (this.ants[i].ant.x <= this.playerIdleAnimation.x+35 && this.ants[i].ant.x >= this.playerIdleAnimation.x-10) {
+      if (this.ants[i].ant.x <= this.playerIdleAnimation.x + 35 && this.ants[i].ant.x >= this.playerIdleAnimation.x - 10) {
         // Mark for removal instead of removing immediately
         antsToRemove.push(i);
       } else {
@@ -823,7 +821,7 @@ export class FastHandsComponent implements OnInit {
     this.limitVisibleTexts();
 
     // Spawn new ant every 100 ticks
-    if (this.tickCounter % 10 == 0) {
+    if (this.tickCounter % 50 == 0) {
       this.spawnAnt();
     }
 
