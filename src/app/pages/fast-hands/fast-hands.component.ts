@@ -20,7 +20,7 @@ export class FastHandsComponent implements OnInit {
   private playerIdleAnimation!: AnimatedSprite;
   private antSpriteSheet!: Spritesheet;
   private ants: AntWithText[] = [];
-  private antsMovementSpeed: number = .5;
+  private antsMovementSpeed: number = .08;
   private tickCounter: number = 0;
   private antCounter: number = 0;
 
@@ -43,6 +43,21 @@ export class FastHandsComponent implements OnInit {
   // Typing feedback properties
   private typingFeedback!: Text;
   private feedbackTimeout: any;
+
+  //Red Sphere
+  private targetIndicator!: Graphics;
+  private targetPosition = { x: 0, y: 0 };
+  private targetVelocity = { x: 0, y: 0 };
+  private targetTime = 0.3; // Time to reach target in seconds (customizable)
+  private lastActiveAntIndex = -1; // Track the last highlighted ant
+
+  private difficultyLevel = 1;
+  private maxDifficultyLevel = 5;
+  private timeBetweenLevels: number[] = [8000, 20000, 40000, 60000, 80000]; // Time in ms before level increases
+  private levelStartTime = 0; // Track when the current level started
+  private levelAnnouncement!: Text; // Text for level announcements
+  private isShowingAnnouncement = false;
+  private announcementTimer = 0;
 
   // Word categories for different themes
   private wordCategories = {
@@ -157,7 +172,96 @@ export class FastHandsComponent implements OnInit {
   };
 
   constructor() {
-    setInterval(() => this.simulateTick(), 50);
+    setInterval(() => this.simulateTick(), 10);
+    this.levelStartTime = Date.now();
+  }
+
+  private setupLevelAnnouncement() {
+    // Create level announcement text
+    this.levelAnnouncement = new Text('', {
+      fontFamily: 'Arial',
+      fontSize: 24,
+      fontWeight: 'bold',
+      fill: 0x00FF00, // Yellow text
+      stroke: 0x000000,
+      // strokeThickness: 4,
+      align: 'center'
+    });
+
+    // Center the text
+    this.levelAnnouncement.anchor.set(0.5);
+    this.levelAnnouncement.x = (this.app.screen.width / 3) / 2;
+    this.levelAnnouncement.y = (this.app.screen.height / 3) / 2;
+
+    // Make it initially invisible
+    this.levelAnnouncement.visible = false;
+
+    // Add to game container with high z-index
+    this.levelAnnouncement.zIndex = 3000; // Above everything else
+    this.gameContainer.addChild(this.levelAnnouncement);
+  }
+
+  private showLevelAnnouncement(level: number) {
+    this.levelAnnouncement.text = `Level ${level}!`;
+    this.levelAnnouncement.visible = true;
+    this.isShowingAnnouncement = true;
+    this.announcementTimer = 0;
+
+    // Add a scale animation effect
+    this.levelAnnouncement.scale.set(0);
+    // Create a pop-in animation
+    const animateIn = () => {
+      this.levelAnnouncement.scale.x += 0.1;
+      this.levelAnnouncement.scale.y += 0.1;
+
+      if (this.levelAnnouncement.scale.x < 1) {
+        requestAnimationFrame(animateIn);
+      } else {
+        this.levelAnnouncement.scale.set(1);
+      }
+    };
+
+    animateIn();
+  }
+
+
+  private updateDifficulty() {
+    // Check if it's time to increase difficulty
+    const currentTime = Date.now();
+    const timeInCurrentLevel = currentTime - this.levelStartTime;
+
+    // Only increase level if we haven't reached max difficulty
+    if (this.difficultyLevel < this.maxDifficultyLevel) {
+      if (timeInCurrentLevel >= this.timeBetweenLevels[this.difficultyLevel - 1]) {
+        // Increase difficulty level
+        this.difficultyLevel++;
+
+        // Record the start time of this new level
+        this.levelStartTime = currentTime;
+
+        // Show level announcement
+        this.showLevelAnnouncement(this.difficultyLevel);
+
+        console.log(`Difficulty increased to Level ${this.difficultyLevel}`);
+      }
+    }
+
+    // Update announcement visibility
+    if (this.isShowingAnnouncement) {
+      this.announcementTimer += 10; // Add 10ms (tick interval)
+
+      // Show announcement for 2 seconds
+      if (this.announcementTimer >= 2000) {
+        // Fade out the announcement
+        this.levelAnnouncement.alpha -= 0.05;
+
+        if (this.levelAnnouncement.alpha <= 0) {
+          this.levelAnnouncement.visible = false;
+          this.isShowingAnnouncement = false;
+          this.levelAnnouncement.alpha = 1; // Reset alpha for next time
+        }
+      }
+    }
   }
 
   private setupKeyboardListeners() {
@@ -206,6 +310,10 @@ export class FastHandsComponent implements OnInit {
       // We found a matching ant, start typing the word
       const activeAnt = this.ants[this.activeAntIndex];
       activeAnt.word = activeAnt.word.slice(1, activeAnt.word.length);
+
+      // Update the last active ant index and make the target visible
+      this.lastActiveAntIndex = this.activeAntIndex;
+      this.targetIndicator.visible = true;
     } else {
       // Show feedback based on whether we found a matching ant
       this.showTypingFeedback(event.key, 0x00FF00); // Green for correct
@@ -229,7 +337,6 @@ export class FastHandsComponent implements OnInit {
         // No longer matches
         this.showTypingFeedback(event.key, 0xFF0000); // Red for incorrect
       }
-
     }
 
     // Update the highlight
@@ -446,8 +553,12 @@ export class FastHandsComponent implements OnInit {
     // Set up the typing feedback
     this.setupTypingFeedback();
 
+    this.setupTargetIndicator();
+
     // Center the game container initially
     this.centerGameContainer();
+
+    this.setupLevelAnnouncement();
 
     // Set up keyboard listeners
     this.setupKeyboardListeners();
@@ -575,10 +686,29 @@ export class FastHandsComponent implements OnInit {
       this.focusedWordContainer.y = (this.app.screen.height / 3) - 30;
     }
 
-    // Update typing feedback position
     if (this.typingFeedback) {
       this.typingFeedback.x = this.playerIdleAnimation.x + this.playerIdleAnimation.width / 2;
       this.typingFeedback.y = this.playerIdleAnimation.y - 10;
+    }
+
+    // Update target indicator position after resize
+    if (this.targetIndicator && this.targetIndicator.visible) {
+      const antToTrack = this.activeAntIndex !== -1 ? this.activeAntIndex : this.lastActiveAntIndex;
+      if (antToTrack !== -1 && antToTrack < this.ants.length) {
+        const ant = this.ants[antToTrack];
+        const antCenterX = ant.ant.x + (ant.ant.width / 2) * (ant.ant.scale.x < 0 ? -1 : 1);
+        const antCenterY = ant.ant.y - 15;
+
+        // Immediately update position without animation on resize
+        this.targetPosition = { x: antCenterX, y: antCenterY };
+        this.targetIndicator.x = antCenterX;
+        this.targetIndicator.y = antCenterY;
+      }
+    }
+
+    if (this.levelAnnouncement) {
+      this.levelAnnouncement.x = (this.app.screen.width / 3) / 2;
+      this.levelAnnouncement.y = (this.app.screen.height / 3) / 2;
     }
   }
 
@@ -684,9 +814,68 @@ export class FastHandsComponent implements OnInit {
     antObj.text.y += bounceAmount;
   }
 
+  private setupTargetIndicator() {
+    // Create a simple red dot instead of a crosshair
+    this.targetIndicator = new Graphics();
+
+    // Draw a medium-sized red dot
+    this.targetIndicator.beginFill(0xFF0000, 0.7);
+    this.targetIndicator.drawCircle(0, 0, 2);
+    this.targetIndicator.endFill();
+
+    // Add a subtle glow effect
+    // this.targetIndicator.beginFill(0xFF0000, 0.2);
+    // this.targetIndicator.drawCircle(0, 0, 12);
+    // this.targetIndicator.endFill();
+
+    // Add to the game container with high zIndex to stay above ants
+    this.targetIndicator.zIndex = 2000;
+    this.gameContainer.addChild(this.targetIndicator);
+
+    // Initially hide the indicator
+    this.targetIndicator.visible = false;
+  }
+
+  private updateTargetIndicatorPosition() {
+    if (!this.targetIndicator.visible) return;
+
+    // Calculate vector to target
+    const dx = this.targetPosition.x - this.targetIndicator.x;
+    const dy = this.targetPosition.y - this.targetIndicator.y;
+
+    // Calculate distance
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // If we're very close, just snap to position
+    if (distance < 0.5) {
+      this.targetIndicator.x = this.targetPosition.x;
+      this.targetIndicator.y = this.targetPosition.y;
+      return;
+    }
+
+    // Calculate physics parameters based on targetTime
+    // For a 0.3 second target time with 50ms ticks, we need to reach the target in ~6 ticks
+    const ticksToTarget = this.targetTime * 1000 / 50; // Convert time to game ticks
+
+    // Simple interpolation approach for more predictable timing
+    const step = 1 / ticksToTarget;
+
+    // Move a percentage of the remaining distance each tick
+    this.targetIndicator.x += dx * step;
+    this.targetIndicator.y += dy * step;
+
+    // Add a slight pulsing effect
+    const pulseScale = 1 + Math.sin(this.tickCounter * 0.2) * 0.15;
+    this.targetIndicator.scale.set(pulseScale);
+  }
+
+
   private highlightActiveAnt() {
     if (this.activeAntIndex !== -1 && this.activeAntIndex < this.ants.length) {
       const activeAnt = this.ants[this.activeAntIndex];
+
+      // Update last active ant index
+      this.lastActiveAntIndex = this.activeAntIndex;
 
       // Show the focused word container
       this.focusedWordContainer.visible = true;
@@ -696,12 +885,19 @@ export class FastHandsComponent implements OnInit {
 
       // Highlight the typed part in the progress bar
       this.typingProgressBar.clear();
-      this.typingProgressBar.beginFill(0x00FF00, 0.5); // Green for progress
+      this.typingProgressBar.beginFill(0x00FF00, 0.5);
 
       // Calculate progress width based on how much of the word is typed
-      const progressWidth = (this.currentTypingWord.length / activeAnt.word.length) * (this.app.screen.width / 3);
+      const totalWordLength = this.currentTypingWord.length + activeAnt.word.length;
+      const progressWidth = (this.currentTypingWord.length / totalWordLength) * (this.app.screen.width / 3);
       this.typingProgressBar.drawRect(0, 0, progressWidth, 20);
       this.typingProgressBar.endFill();
+
+      // Update target position for the indicator (will happen also in simulateTick)
+      this.updateTargetPositionForAnt(this.activeAntIndex);
+
+      // Make sure the target indicator is visible
+      this.targetIndicator.visible = true;
 
       // Reset styles for all ants
       this.ants.forEach((antObj, index) => {
@@ -712,7 +908,6 @@ export class FastHandsComponent implements OnInit {
             fontSize: 9.5, // Slightly larger
             fill: 0xFFFF00, // Yellow text
             stroke: 0x000000,
-            // strokeThickness: 3,
             align: 'center',
             letterSpacing: 2,
             dropShadow: {
@@ -730,7 +925,6 @@ export class FastHandsComponent implements OnInit {
             fontSize: 8.5,
             fill: 0xFFFFFF,
             stroke: 0x000000,
-            // strokeThickness: 2,
             align: 'center',
             letterSpacing: 2,
             dropShadow: {
@@ -746,10 +940,22 @@ export class FastHandsComponent implements OnInit {
     } else {
       // Hide the focused word container if no ant is active
       this.focusedWordContainer.visible = false;
+
+      // Don't hide the target indicator - we'll keep tracking the last highlighted ant
+      // Only reset active ant index
       this.activeAntIndex = -1;
     }
   }
 
+  private updateTargetPositionForAnt(antIndex: number) {
+    if (antIndex !== -1 && antIndex < this.ants.length) {
+      const ant = this.ants[antIndex];
+      // Position the target slightly above the ant
+      const antCenterX = ant.ant.x + (ant.ant.width / 2) * (ant.ant.scale.x < 0 ? -1 : 1);
+      const antCenterY = ant.ant.y - 15;
+      this.targetPosition = { x: antCenterX, y: antCenterY };
+    }
+  }
   private removeAnt(index: number) {
     if (index >= 0 && index < this.ants.length) {
       // Remove the ant and text from the container
@@ -761,7 +967,40 @@ export class FastHandsComponent implements OnInit {
     }
   }
 
+
+  private getSpawnRate(): number {
+    // Base spawn rates for each difficulty level (in ticks)
+    // Remember that higher number = slower spawn rate
+    const baseRates = [
+      150,  // Level 1: Every 50 ticks (500ms)
+      130,  // Level 2: Every 40 ticks (400ms)
+      100,  // Level 3: Every 30 ticks (300ms)
+      50,  // Level 4: Every 25 ticks (250ms)
+      20   // Level 5: Every 20 ticks (200ms)
+    ];
+
+    // Get the base rate for current level (array is 0-indexed)
+    const baseRate = baseRates[this.difficultyLevel - 1];
+
+    // Calculate a gradual decrease within each level
+    // This creates a smooth increase in difficulty within each level
+    const ticksInCurrentLevel = (Date.now() - this.levelStartTime) / 10; // Convert ms to ticks
+    const scaleFactor = 0.0002; // How quickly difficulty increases within a level
+
+    // Calculate current spawn rate (gradually decreasing from the base rate, but never below certain minimum)
+    const minimumRate = Math.max(15, baseRate - 10); // Never go below 15 ticks or baseRate-10
+    const currentRate = Math.max(
+      minimumRate,
+      baseRate - Math.floor(ticksInCurrentLevel * scaleFactor)
+    );
+
+    return currentRate;
+  }
+
   simulateTick() {
+    // Update difficulty level based on time
+    this.updateDifficulty();
+
     // Get player position
     const playerCenterX = this.playerIdleAnimation.x + this.playerIdleAnimation.width / 2;
 
@@ -770,11 +1009,13 @@ export class FastHandsComponent implements OnInit {
 
     // Update ant positions and manage which texts are visible
     for (let i = 0; i < this.ants.length; i++) {
-      // Move ants
+      // Move ants - speed increases with difficulty level
+      const antSpeed = this.antsMovementSpeed * (1 + (this.difficultyLevel - 1) * 0.2);
+
       if (this.ants[i].ant.scale.x == -1) {
-        this.ants[i].ant.x = this.ants[i].ant.x + this.antsMovementSpeed;
+        this.ants[i].ant.x = this.ants[i].ant.x + antSpeed;
       } else {
-        this.ants[i].ant.x = this.ants[i].ant.x - this.antsMovementSpeed;
+        this.ants[i].ant.x = this.ants[i].ant.x - antSpeed;
       }
 
       // Check if ant is too close to the player
@@ -785,15 +1026,25 @@ export class FastHandsComponent implements OnInit {
         // Update the text position to follow the ant
         this.updateTextPosition(this.ants[i]);
 
-        // Calculate distance from ant to player
-        const antCenterX = this.ants[i].ant.x + this.ants[i].ant.width / 2;
-
         // Make text visible only for ants close to the player or being typed
         if (i !== this.activeAntIndex) {
           this.ants[i].text.visible = false;
         }
       }
     }
+
+    // Update target position if we're tracking an ant (active or last active)
+    const antToTrack = this.activeAntIndex !== -1 ? this.activeAntIndex : this.lastActiveAntIndex;
+    if (antToTrack !== -1 && antToTrack < this.ants.length) {
+      this.updateTargetPositionForAnt(antToTrack);
+    } else if (this.lastActiveAntIndex !== -1 && this.lastActiveAntIndex >= this.ants.length) {
+      // If the last active ant no longer exists, hide the indicator
+      this.targetIndicator.visible = false;
+      this.lastActiveAntIndex = -1;
+    }
+
+    // Update target indicator position
+    this.updateTargetIndicatorPosition();
 
     // Remove ants in reverse order to avoid index shifting problems
     if (antsToRemove.length > 0) {
@@ -813,6 +1064,16 @@ export class FastHandsComponent implements OnInit {
           this.activeAntIndex--;
         }
 
+        // If we're removing the last active ant, hide the indicator
+        if (index === this.lastActiveAntIndex) {
+          this.lastActiveAntIndex = -1;
+          this.targetIndicator.visible = false;
+        } else if (index < this.lastActiveAntIndex) {
+          // If we're removing an ant before the last active one,
+          // decrement the index to keep it pointing to the correct ant
+          this.lastActiveAntIndex--;
+        }
+
         this.removeAnt(index);
       }
     }
@@ -820,8 +1081,11 @@ export class FastHandsComponent implements OnInit {
     // Limit the number of visible texts (not including the active one)
     this.limitVisibleTexts();
 
-    // Spawn new ant every 100 ticks
-    if (this.tickCounter % 50 == 0) {
+    // Get current spawn rate based on difficulty
+    const currentSpawnRate = this.getSpawnRate();
+
+    // Spawn ant based on the calculated rate
+    if (this.tickCounter % Math.floor(currentSpawnRate) == 0) {
       this.spawnAnt();
     }
 
@@ -868,5 +1132,9 @@ export class FastHandsComponent implements OnInit {
   public adjustTextVisibility(maxVisible: number, visibilityDistance: number) {
     this.maxVisibleTexts = maxVisible;
     this.textVisibilityDistance = visibilityDistance;
+  }
+
+  public setTargetTime(seconds: number) {
+    this.targetTime = seconds;
   }
 }
