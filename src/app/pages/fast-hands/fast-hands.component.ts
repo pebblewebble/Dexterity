@@ -53,11 +53,15 @@ export class FastHandsComponent implements OnInit {
 
   private difficultyLevel = 1;
   private maxDifficultyLevel = 5;
-  private timeBetweenLevels: number[] = [8000, 20000, 40000, 60000, 80000]; // Time in ms before level increases
+  private timeBetweenLevels: number[] = [20000, 50000, 100000, 290000, 80000]; // Time in ms before level increases
   private levelStartTime = 0; // Track when the current level started
   private levelAnnouncement!: Text; // Text for level announcements
   private isShowingAnnouncement = false;
   private announcementTimer = 0;
+
+  private playerHealth = 15; // Starting health
+  private healthText!: Text; // Text display for health
+  private isGameOver = false; // Track game over state
 
   // Word categories for different themes
   private wordCategories = {
@@ -176,11 +180,114 @@ export class FastHandsComponent implements OnInit {
     this.levelStartTime = Date.now();
   }
 
+  private setupHealthDisplay() {
+    // Create health text display in the top left
+    this.healthText = new Text('Health: ❤️❤️❤️', {
+      fontFamily: 'Arial',
+      fontSize: 8,
+      fontWeight: 'bold',
+      fill: 0xFFFFFF, // White text
+      stroke: 0x000000,
+      align: 'left'
+    });
+
+    // Position in top left with some padding
+    this.healthText.x = 10;
+    this.healthText.y = 10;
+
+    // Add to game container
+    this.gameContainer.addChild(this.healthText);
+    this.updateHealthDisplay();
+  }
+
+  private updateHealthDisplay() {
+    // Create heart string based on current health
+    let hearts = '';
+    for (let i = 0; i < this.playerHealth; i++) {
+      hearts += '❤️';
+    }
+
+    // Update the text
+    this.healthText.text = `Health: ${hearts}`;
+
+    // Make health text red when low
+    if (this.playerHealth <= 1) {
+      this.healthText.style.fill = 0xFF0000; // Red when low health
+    } else {
+      this.healthText.style.fill = 0xFFFFFF; // White otherwise
+    }
+  }
+
+  private takeDamage() {
+    // Only process damage if the game isn't over
+    if (this.isGameOver) return;
+
+    // Reduce health
+    this.playerHealth--;
+
+    // Update the health display
+    this.updateHealthDisplay();
+
+    // Add visual feedback for damage
+    this.playerIdleAnimation.tint = 0xFF0000; // Tint player red
+
+    // Reset tint after a short delay
+    setTimeout(() => {
+      this.playerIdleAnimation.tint = 0xFFFFFF; // Reset to normal color
+    }, 300);
+
+    // Check for game over
+    if (this.playerHealth <= 0) {
+      this.gameOver();
+    }
+  }
+
+  private gameOver() {
+    this.isGameOver = true;
+
+    // Create game over text
+    const gameOverText = new Text('GAME OVER', {
+      fontFamily: 'Arial',
+      fontSize: 36,
+      fontWeight: 'bold',
+      fill: 0xFF0000, // Red text
+      stroke: 0x000000,
+      align: 'center'
+    });
+
+    // Center the text
+    gameOverText.anchor.set(0.5);
+    gameOverText.x = (this.app.screen.width / 3) / 2;
+    gameOverText.y = (this.app.screen.height / 3) / 2;
+
+    // Add to game container
+    this.gameContainer.addChild(gameOverText);
+
+    // Add restart instructions
+    const restartText = new Text('Press R to restart', {
+      fontFamily: 'Arial',
+      fontSize: 18,
+      fill: 0xFFFFFF,
+      stroke: 0x000000,
+      align: 'center'
+    });
+
+    // Position below game over text
+    restartText.anchor.set(0.5);
+    restartText.x = (this.app.screen.width / 3) / 2;
+    restartText.y = gameOverText.y + 50;
+
+    this.gameContainer.addChild(restartText);
+
+    // Stop spawning ants
+    // We'll handle this in simulateTick by checking isGameOver
+  }
+
   private setupLevelAnnouncement() {
     // Create level announcement text
     this.levelAnnouncement = new Text('', {
       fontFamily: 'Arial',
-      fontSize: 24,
+      fontSize: 100,
       fontWeight: 'bold',
       fill: 0x00FF00, // Yellow text
       stroke: 0x000000,
@@ -251,7 +358,7 @@ export class FastHandsComponent implements OnInit {
       this.announcementTimer += 10; // Add 10ms (tick interval)
 
       // Show announcement for 2 seconds
-      if (this.announcementTimer >= 2000) {
+      if (this.announcementTimer >= 4000) {
         // Fade out the announcement
         this.levelAnnouncement.alpha -= 0.05;
 
@@ -274,12 +381,44 @@ export class FastHandsComponent implements OnInit {
   private handleKeyDown(event: KeyboardEvent) {
     // Store the key state
     this.keysPressed[event.key] = true;
-    console.log(`Key pressed: ${event.key}`);
 
-    // Example of how to respond to a specific key
-    // if (event.key === ' ' || event.key === 'Spacebar') {
-    //   this.onSpacePressed();
-    // }
+    // Check for restart when game is over
+    if (this.isGameOver && (event.key === 'r' || event.key === 'R')) {
+      this.restartGame();
+    }
+  }
+
+  // Add a method to restart the game
+  private restartGame() {
+    // Reset game state
+    this.playerHealth = 15;
+    this.isGameOver = false;
+    this.difficultyLevel = 1;
+    this.levelStartTime = Date.now();
+    this.tickCounter = 0;
+
+    // Remove all ants
+    for (let i = this.ants.length - 1; i >= 0; i--) {
+      this.removeAnt(i);
+    }
+
+    // Reset typing state
+    this.currentTypingWord = '';
+    this.activeAntIndex = -1;
+    this.focusedWordContainer.visible = false;
+
+    // Reset health display
+    this.updateHealthDisplay();
+
+    // Remove any game over text
+    // Find and remove game over and restart texts
+    for (let i = this.gameContainer.children.length - 1; i >= 0; i--) {
+      const child = this.gameContainer.children[i];
+      if (child instanceof Text &&
+        (child.text === 'GAME OVER' || child.text === 'Press R to restart')) {
+        this.gameContainer.removeChild(child);
+      }
+    }
   }
 
   private handleKeyUp(event: KeyboardEvent) {
@@ -295,46 +434,72 @@ export class FastHandsComponent implements OnInit {
 
     // Check if we're starting a new word
     if (this.activeAntIndex === -1) {
-      // Find an ant whose word starts with the current typing
-      this.activeAntIndex = this.ants.findIndex(ant =>
+      // Get player position to calculate ant distances
+      const playerCenterX = this.playerIdleAnimation.x + this.playerIdleAnimation.width / 2;
+
+      // Create array of ants with their distances from player
+      const antsWithDistance = this.ants.map((ant, index) => {
+        const antCenterX = ant.ant.x + ant.ant.width / 2;
+        return {
+          index,
+          distance: Math.abs(antCenterX - playerCenterX),
+          word: ant.word
+        };
+      });
+
+      // Sort by distance (closest first)
+      antsWithDistance.sort((a, b) => a.distance - b.distance);
+
+      // Limit to only visible ants (based on maxVisibleTexts)
+      const visibleAnts = antsWithDistance.slice(0, this.maxVisibleTexts);
+
+      // Find an ant whose word starts with the current typing (only search visible ants)
+      const matchingAntInfo = visibleAnts.find(ant =>
         ant.word.toLowerCase().startsWith(event.key.toLowerCase())
       );
 
-      // Check if we found a matching ant
-      if (this.activeAntIndex === -1) {
-        // No matching ant found, show feedback and return
+      // If no visible ant matches, show error feedback
+      if (!matchingAntInfo) {
         this.showTypingFeedback(event.key, 0xFF0000); // Red for incorrect
         return;
       }
 
-      // We found a matching ant, start typing the word
+      // We found a matching ant, set it as active
+      this.activeAntIndex = matchingAntInfo.index;
+
+      // Start typing the word
       const activeAnt = this.ants[this.activeAntIndex];
-      activeAnt.word = activeAnt.word.slice(1, activeAnt.word.length);
+      activeAnt.word = activeAnt.word.slice(1);
+      this.currentTypingWord = event.key;
 
       // Update the last active ant index and make the target visible
       this.lastActiveAntIndex = this.activeAntIndex;
       this.targetIndicator.visible = true;
-    } else {
-      // Show feedback based on whether we found a matching ant
+
+      // Show feedback for correct key
       this.showTypingFeedback(event.key, 0x00FF00); // Green for correct
+    } else {
+      // We're continuing to type an already active word
       const activeAnt = this.ants[this.activeAntIndex];
-      console.dir(activeAnt.word);
+
       if (activeAnt.word.toLowerCase().startsWith(event.key.toLowerCase())) {
-        activeAnt.word = activeAnt.word.slice(1, activeAnt.word.length);
+        // Correct key pressed
+        activeAnt.word = activeAnt.word.slice(1);
         this.currentTypingWord += event.key;
         this.showTypingFeedback(event.key, 0x00FF00); // Green for correct
 
         // Check if the word is complete
-        if (activeAnt.word.length == 0) {
+        if (activeAnt.word.length === 0) {
           this.showTypingFeedback('✓', 0x00FF00, 800); // Green checkmark, longer display
           this.focusedWordContainer.visible = false; // Hide the container explicitly
+
           // Remove the ant
           this.removeAnt(this.activeAntIndex);
           this.currentTypingWord = '';
           this.activeAntIndex = -1;
         }
       } else {
-        // No longer matches
+        // Incorrect key pressed
         this.showTypingFeedback(event.key, 0xFF0000); // Red for incorrect
       }
     }
@@ -560,6 +725,8 @@ export class FastHandsComponent implements OnInit {
 
     this.setupLevelAnnouncement();
 
+    this.setupHealthDisplay();
+
     // Set up keyboard listeners
     this.setupKeyboardListeners();
 
@@ -608,7 +775,6 @@ export class FastHandsComponent implements OnInit {
       fontSize: 14,
       fill: 0x00FF00,
       stroke: 0x000000,
-      // strokeThickness: 4,
       align: 'center'
     });
 
@@ -710,6 +876,11 @@ export class FastHandsComponent implements OnInit {
       this.levelAnnouncement.x = (this.app.screen.width / 3) / 2;
       this.levelAnnouncement.y = (this.app.screen.height / 3) / 2;
     }
+
+    if (this.healthText) {
+      this.healthText.x = 10;
+      this.healthText.y = 10;
+    }
   }
 
   // Get a random word based on spawn side (left or right)
@@ -773,7 +944,6 @@ export class FastHandsComponent implements OnInit {
       fontSize: 8.5,
       fill: 0xFFFFFF,
       stroke: 0x000000,
-      // strokeThickness: 2,
       align: 'center',
       letterSpacing: 2,
       dropShadow: {
@@ -972,11 +1142,11 @@ export class FastHandsComponent implements OnInit {
     // Base spawn rates for each difficulty level (in ticks)
     // Remember that higher number = slower spawn rate
     const baseRates = [
-      150,  // Level 1: Every 50 ticks (500ms)
-      130,  // Level 2: Every 40 ticks (400ms)
+      350,  // Level 1: Every 50 ticks (500ms)
+      200,  // Level 2: Every 40 ticks (400ms)
       100,  // Level 3: Every 30 ticks (300ms)
       50,  // Level 4: Every 25 ticks (250ms)
-      20   // Level 5: Every 20 ticks (200ms)
+      25   // Level 5: Every 20 ticks (200ms)
     ];
 
     // Get the base rate for current level (array is 0-indexed)
@@ -998,6 +1168,9 @@ export class FastHandsComponent implements OnInit {
   }
 
   simulateTick() {
+    // Skip game updates if game is over
+    if (this.isGameOver) return;
+
     // Update difficulty level based on time
     this.updateDifficulty();
 
@@ -1006,6 +1179,8 @@ export class FastHandsComponent implements OnInit {
 
     // Keep track of ants to remove after the loop
     const antsToRemove: number[] = [];
+    // Track if damage should be applied this tick
+    let shouldTakeDamage = false;
 
     // Update ant positions and manage which texts are visible
     for (let i = 0; i < this.ants.length; i++) {
@@ -1022,6 +1197,8 @@ export class FastHandsComponent implements OnInit {
       if (this.ants[i].ant.x <= this.playerIdleAnimation.x + 35 && this.ants[i].ant.x >= this.playerIdleAnimation.x - 10) {
         // Mark for removal instead of removing immediately
         antsToRemove.push(i);
+        // Flag damage should be taken
+        shouldTakeDamage = true;
       } else {
         // Update the text position to follow the ant
         this.updateTextPosition(this.ants[i]);
@@ -1033,7 +1210,12 @@ export class FastHandsComponent implements OnInit {
       }
     }
 
-    // Update target position if we're tracking an ant (active or last active)
+    // Apply damage if any ant reached the player
+    if (shouldTakeDamage) {
+      this.takeDamage();
+    }
+
+    // Update target position if we're tracking an ant
     const antToTrack = this.activeAntIndex !== -1 ? this.activeAntIndex : this.lastActiveAntIndex;
     if (antToTrack !== -1 && antToTrack < this.ants.length) {
       this.updateTargetPositionForAnt(antToTrack);
@@ -1081,12 +1263,15 @@ export class FastHandsComponent implements OnInit {
     // Limit the number of visible texts (not including the active one)
     this.limitVisibleTexts();
 
-    // Get current spawn rate based on difficulty
-    const currentSpawnRate = this.getSpawnRate();
+    // Only spawn ants if the game isn't over
+    if (!this.isGameOver) {
+      // Get current spawn rate based on difficulty
+      const currentSpawnRate = this.getSpawnRate();
 
-    // Spawn ant based on the calculated rate
-    if (this.tickCounter % Math.floor(currentSpawnRate) == 0) {
-      this.spawnAnt();
+      // Spawn ant based on the calculated rate
+      if (this.tickCounter % Math.floor(currentSpawnRate) == 0) {
+        this.spawnAnt();
+      }
     }
 
     this.tickCounter++;
