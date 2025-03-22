@@ -63,6 +63,14 @@ export class FastHandsComponent implements OnInit {
   private healthText!: Text; // Text display for health
   private isGameOver = false; // Track game over state
 
+  private playerPoints = 0;
+  private correctKeyPresses = 0;
+  private totalKeyPresses = 0;
+  private gameStartTime = 0;
+  private gameTimer!: Text;
+  private pointsText!: Text;
+  private accuracyText!: Text;
+
   // Word categories for different themes
   private wordCategories = {
     // Short words (3-4 letters) - Quick typing practice
@@ -180,7 +188,7 @@ export class FastHandsComponent implements OnInit {
     this.levelStartTime = Date.now();
   }
 
-  private setupHealthDisplay() {
+  private setupStatsDisplay() {
     // Create health text display in the top left
     this.healthText = new Text('Health: ❤️❤️❤️', {
       fontFamily: 'Arial',
@@ -195,11 +203,95 @@ export class FastHandsComponent implements OnInit {
     this.healthText.x = 10;
     this.healthText.y = 10;
 
+    // Points counter
+    this.pointsText = new Text('Points: 0', {
+      fontFamily: 'Arial',
+      fontSize: 8,
+      fontWeight: 'bold',
+      fill: 0xFFFFFF,
+      stroke: 0x000000,
+      align: 'left'
+    });
+    this.pointsText.x = 10;
+    this.pointsText.y = 25;
+
+    // Accuracy tracker
+    this.accuracyText = new Text('Accuracy: 100%', {
+      fontFamily: 'Arial',
+      fontSize: 8,
+      fontWeight: 'bold',
+      fill: 0xFFFFFF,
+      stroke: 0x000000,
+      align: 'left'
+    });
+    this.accuracyText.x = 10;
+    this.accuracyText.y = 40;
+
+    // Game timer
+    this.gameTimer = new Text('Time: 00:00', {
+      fontFamily: 'Arial',
+      fontSize: 8,
+      fontWeight: 'bold',
+      fill: 0xFFFFFF,
+      stroke: 0x000000,
+      align: 'left'
+    });
+    this.gameTimer.x = 10;
+    this.gameTimer.y = 55;
+
     // Add to game container
     this.gameContainer.addChild(this.healthText);
+    this.gameContainer.addChild(this.pointsText);
+    this.gameContainer.addChild(this.accuracyText);
+    this.gameContainer.addChild(this.gameTimer);
+
     this.updateHealthDisplay();
+
+    // Initialize game start time
+    this.gameStartTime = Date.now();
   }
 
+  private updatePoints(points: number) {
+    this.playerPoints += points;
+    this.pointsText.text = `Points: ${this.playerPoints}`;
+  }
+
+  // Add this method to update accuracy
+  private updateAccuracy(correct: boolean) {
+    this.totalKeyPresses++;
+
+    if (correct) {
+      this.correctKeyPresses++;
+    }
+
+    const accuracy = this.totalKeyPresses > 0
+      ? Math.round((this.correctKeyPresses / this.totalKeyPresses) * 100)
+      : 100;
+
+    this.accuracyText.text = `Accuracy: ${accuracy}%`;
+
+    // Change color based on accuracy
+    if (accuracy >= 90) {
+      this.accuracyText.style.fill = 0x00FF00; // Green for high accuracy
+    } else if (accuracy >= 70) {
+      this.accuracyText.style.fill = 0xFFFF00; // Yellow for medium accuracy
+    } else {
+      this.accuracyText.style.fill = 0xFF6600; // Orange for low accuracy
+    }
+  }
+
+  // Add this method to update the timer
+  private updateTimer() {
+    const currentTime = Date.now();
+    const elapsedSeconds = Math.floor((currentTime - this.gameStartTime) / 1000);
+
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const seconds = elapsedSeconds % 60;
+
+    // Format as MM:SS with leading zeros
+    const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    this.gameTimer.text = `Time: ${formattedTime}`;
+  }
   private updateHealthDisplay() {
     // Create heart string based on current health
     let hearts = '';
@@ -397,6 +489,14 @@ export class FastHandsComponent implements OnInit {
     this.levelStartTime = Date.now();
     this.tickCounter = 0;
 
+    // Reset stats
+    this.playerPoints = 0;
+    this.correctKeyPresses = 0;
+    this.totalKeyPresses = 0;
+    this.gameStartTime = Date.now();
+    this.updatePoints(0);
+    this.updateAccuracy(true); // Reset to 100%
+
     // Remove all ants
     for (let i = this.ants.length - 1; i >= 0; i--) {
       this.removeAnt(i);
@@ -458,9 +558,10 @@ export class FastHandsComponent implements OnInit {
         ant.word.toLowerCase().startsWith(event.key.toLowerCase())
       );
 
-      // If no visible ant matches, show error feedback
+      // If no visible ant matches, show error feedback and track incorrect keystroke
       if (!matchingAntInfo) {
         this.showTypingFeedback(event.key, 0xFF0000); // Red for incorrect
+        this.updateAccuracy(false);
         return;
       }
 
@@ -476,8 +577,12 @@ export class FastHandsComponent implements OnInit {
       this.lastActiveAntIndex = this.activeAntIndex;
       this.targetIndicator.visible = true;
 
-      // Show feedback for correct key
+      // Show feedback for correct key and track correct keystroke
       this.showTypingFeedback(event.key, 0x00FF00); // Green for correct
+      this.updateAccuracy(true);
+
+      // Add points for starting a new word
+      this.updatePoints(5);
     } else {
       // We're continuing to type an already active word
       const activeAnt = this.ants[this.activeAntIndex];
@@ -487,11 +592,20 @@ export class FastHandsComponent implements OnInit {
         activeAnt.word = activeAnt.word.slice(1);
         this.currentTypingWord += event.key;
         this.showTypingFeedback(event.key, 0x00FF00); // Green for correct
+        this.updateAccuracy(true);
+
+        // Add points for each correct keystroke
+        this.updatePoints(1);
 
         // Check if the word is complete
         if (activeAnt.word.length === 0) {
           this.showTypingFeedback('✓', 0x00FF00, 800); // Green checkmark, longer display
           this.focusedWordContainer.visible = false; // Hide the container explicitly
+
+          // Bonus points for completing a word
+          // More points for longer words (length of current typing)
+          const wordCompletionBonus = Math.max(10, this.currentTypingWord.length * 2);
+          this.updatePoints(wordCompletionBonus);
 
           // Remove the ant
           this.removeAnt(this.activeAntIndex);
@@ -501,6 +615,7 @@ export class FastHandsComponent implements OnInit {
       } else {
         // Incorrect key pressed
         this.showTypingFeedback(event.key, 0xFF0000); // Red for incorrect
+        this.updateAccuracy(false);
       }
     }
 
@@ -678,6 +793,14 @@ export class FastHandsComponent implements OnInit {
       }
     }
 
+    const vultureAtlas = {
+      frames: {
+        frame1: {
+
+        }
+      }
+    }
+
     // Load and parse textures
     const texture = await Assets.load(atlasData.meta.image);
     const playerIdleTexture = await Assets.load(playerIdleAtlas.meta.image);
@@ -725,7 +848,7 @@ export class FastHandsComponent implements OnInit {
 
     this.setupLevelAnnouncement();
 
-    this.setupHealthDisplay();
+    this.setupStatsDisplay();
 
     // Set up keyboard listeners
     this.setupKeyboardListeners();
@@ -880,6 +1003,21 @@ export class FastHandsComponent implements OnInit {
     if (this.healthText) {
       this.healthText.x = 10;
       this.healthText.y = 10;
+    }
+
+    if (this.pointsText) {
+      this.pointsText.x = 10;
+      this.pointsText.y = 25;
+    }
+
+    if (this.accuracyText) {
+      this.accuracyText.x = 10;
+      this.accuracyText.y = 40;
+    }
+
+    if (this.gameTimer) {
+      this.gameTimer.x = 10;
+      this.gameTimer.y = 55;
     }
   }
 
@@ -1171,8 +1309,12 @@ export class FastHandsComponent implements OnInit {
     // Skip game updates if game is over
     if (this.isGameOver) return;
 
+
+    this.updateTimer();
+
     // Update difficulty level based on time
     this.updateDifficulty();
+
 
     // Get player position
     const playerCenterX = this.playerIdleAnimation.x + this.playerIdleAnimation.width / 2;
