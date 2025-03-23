@@ -7,6 +7,13 @@ interface AntWithText {
   word: string;
 }
 
+interface VultureWithText {
+  vulture: AnimatedSprite;
+  text: Text;
+  number: number;
+  clicked: boolean;
+}
+
 @Component({
   selector: 'app-fast-hands',
   imports: [],
@@ -70,6 +77,15 @@ export class FastHandsComponent implements OnInit {
   private gameTimer!: Text;
   private pointsText!: Text;
   private accuracyText!: Text;
+
+  private vultureSpriteSheet!: Spritesheet;
+  private vultures: VultureWithText[] = [];
+  private vultureMovementSpeed: number = 0.03;
+  private vultureSpawnCounter: number = 0;
+  private vultureTickCounter: number = 0;
+  private nextVultureSpawnTime: number = 100; // Time in ticks before first vulture group
+  private currentVultureSequence: number = -1; // Track which number in the sequence (1-3) is next to click
+  private vultureGroupsDefeated: number = 0;
 
   // Word categories for different themes
   private wordCategories = {
@@ -252,12 +268,16 @@ export class FastHandsComponent implements OnInit {
   }
 
   private updatePoints(points: number) {
+    if (!this.pointsText) return;
+
     this.playerPoints += points;
     this.pointsText.text = `Points: ${this.playerPoints}`;
   }
 
   // Add this method to update accuracy
   private updateAccuracy(correct: boolean) {
+    if (!this.accuracyText) return;
+
     this.totalKeyPresses++;
 
     if (correct) {
@@ -282,6 +302,9 @@ export class FastHandsComponent implements OnInit {
 
   // Add this method to update the timer
   private updateTimer() {
+    // Skip if gameTimer isn't initialized yet
+    if (!this.gameTimer) return;
+
     const currentTime = Date.now();
     const elapsedSeconds = Math.floor((currentTime - this.gameStartTime) / 1000);
 
@@ -383,7 +406,6 @@ export class FastHandsComponent implements OnInit {
       fontWeight: 'bold',
       fill: 0x00FF00, // Yellow text
       stroke: 0x000000,
-      // strokeThickness: 4,
       align: 'center'
     });
 
@@ -501,6 +523,16 @@ export class FastHandsComponent implements OnInit {
     for (let i = this.ants.length - 1; i >= 0; i--) {
       this.removeAnt(i);
     }
+
+    for (let i = this.vultures.length - 1; i >= 0; i--) {
+      this.removeVulture(i);
+    }
+
+    this.vultureTickCounter = 0;
+    this.vultureSpawnCounter = 0;
+    this.nextVultureSpawnTime = 1500;
+    this.currentVultureSequence = -1;
+    this.vultureGroupsDefeated = 0;
 
     // Reset typing state
     this.currentTypingWord = '';
@@ -640,6 +672,10 @@ export class FastHandsComponent implements OnInit {
     window.removeEventListener('keyup', this.handleKeyUp.bind(this));
     window.removeEventListener('keypress', this.handleTyping.bind(this));
 
+    if (this.app && this.app.canvas) {
+      this.app.canvas.removeEventListener('click', this.handleCanvasClick.bind(this));
+    }
+
     if (this.feedbackTimeout) {
       clearTimeout(this.feedbackTimeout);
     }
@@ -655,6 +691,8 @@ export class FastHandsComponent implements OnInit {
       resolution: window.devicePixelRatio || 1
     });
     document.body.appendChild(this.app.canvas);
+
+    this.app.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
 
     // Create main game container - all game elements will be children of this
     this.gameContainer = new Container();
@@ -796,8 +834,33 @@ export class FastHandsComponent implements OnInit {
     const vultureAtlas = {
       frames: {
         frame1: {
-
+          frame: { x: 8, y: 5, w: 21, h: 28 },
+          sourceSize: { w: 21, h: 28 },
+          spriteSourceSize: { x: 0, y: 0, w: 21, h: 28 }
+        },
+        frame2: {
+          frame: { x: 45, y: 5, w: 27, h: 30 },
+          sourceSize: { w: 27, h: 30 },
+          spriteSourceSize: { x: 0, y: 0, w: 27, h: 30 }
+        },
+        frame3: {
+          frame: { x: 84, y: 16, w: 30, h: 19 },
+          sourceSize: { w: 30, h: 19 },
+          spriteSourceSize: { x: 0, y: 0, w: 30, h: 19 }
+        },
+        frame4: {
+          frame: { x: 123, y: 13, w: 24, h: 22 },
+          sourceSize: { w: 24, h: 22 },
+          spriteSourceSize: { x: 0, y: 0, w: 24, h: 22 }
         }
+      },
+      meta: {
+        image: 'vulture.png',
+        size: { w: 156, h: 39 },
+        scale: "1"
+      },
+      animations: {
+        fly: ['frame1', 'frame2', 'frame3', 'frame4']
       }
     }
 
@@ -805,12 +868,15 @@ export class FastHandsComponent implements OnInit {
     const texture = await Assets.load(atlasData.meta.image);
     const playerIdleTexture = await Assets.load(playerIdleAtlas.meta.image);
     const antTexture = await Assets.load(antAtlas.meta.image);
+    const vultureTexture = await Assets.load(vultureAtlas.meta.image);
     const spritesheet = new Spritesheet(texture, atlasData);
     const playerIdleSpriteSheet = new Spritesheet(playerIdleTexture, playerIdleAtlas);
     this.antSpriteSheet = new Spritesheet(antTexture, antAtlas);
+    this.vultureSpriteSheet = new Spritesheet(vultureTexture, vultureAtlas);
     await spritesheet.parse();
     await playerIdleSpriteSheet.parse();
     await this.antSpriteSheet.parse();
+    await this.vultureSpriteSheet.parse();
 
     // Create floor tiles
     for (let i = 0; i < 45; i++) {
@@ -853,7 +919,7 @@ export class FastHandsComponent implements OnInit {
     // Set up keyboard listeners
     this.setupKeyboardListeners();
 
-    this.spawnAnt();
+    // this.spawnAnt();
   }
 
   private setupFocusedWordView() {
@@ -1049,6 +1115,250 @@ export class FastHandsComponent implements OnInit {
 
     // Return a random word from the filtered list
     return filteredWords[Math.floor(Math.random() * filteredWords.length)];
+  }
+
+  private spawnVultureGroup() {
+    // Determine starting number (either 1, 4, or 7)
+    const startNumber = Math.floor(Math.random() * 3) * 3 + 1; // Will be 1, 4, or 7
+
+    // Create three vultures with sequential numbers
+    const positions = this.getRandomVulturePositions(3);
+
+    for (let i = 0; i < 3; i++) {
+      this.spawnVulture(positions[i].x, startNumber + i);
+    }
+
+    // Reset the current sequence for this new group
+    if (this.currentVultureSequence === -1) {
+      this.currentVultureSequence = startNumber;
+    }
+  }
+
+  private getRandomVulturePositions(count: number): { x: number }[] {
+    const positions: { x: number }[] = [];
+    const screenWidth = this.app.screen.width / 3;
+
+    // Account for vulture width (using the largest frame width from vulture atlas)
+    const vultureWidth = 30; // Maximum width from your vulture frames
+
+    // Calculate usable screen width (accounting for vulture width)
+    const usableWidth = screenWidth - vultureWidth;
+
+    // Divide screen into sections with margins
+    const sectionWidth = usableWidth / count;
+    const margin = 20; // Extra margin to keep vultures more centered
+
+    for (let i = 0; i < count; i++) {
+      // Random position within each section, with margin
+      const minX = i * sectionWidth + margin;
+      const maxX = (i + 1) * sectionWidth - margin;
+
+      // Ensure we never go out of bounds
+      const safeMinX = Math.max(0, minX);
+      const safeMaxX = Math.min(screenWidth - vultureWidth, maxX);
+
+      // If min > max (possible with very small screens), use the middle of the range
+      const x = safeMinX < safeMaxX
+        ? safeMinX + Math.random() * (safeMaxX - safeMinX)
+        : (screenWidth - vultureWidth) / (count + 1) * (i + 1);
+
+      positions.push({ x });
+    }
+
+    // Shuffle the positions so they don't appear in sequence left to right
+    for (let i = positions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [positions[i], positions[j]] = [positions[j], positions[i]];
+    }
+
+    return positions;
+  }
+
+  private spawnVulture(xPosition: number, number: number) {
+    // Create vulture sprite
+    const vulture = new AnimatedSprite(this.vultureSpriteSheet.animations['fly']);
+    this.gameContainer.addChild(vulture);
+    vulture.play();
+    vulture.animationSpeed = 0.1;
+
+    // Position at the top of the screen
+    vulture.x = xPosition;
+    vulture.y = -30; // Start above the screen
+
+    // Randomly flip some vultures for variety
+    if (Math.random() > 0.5) {
+      vulture.scale.x = -1;
+    }
+
+    // Create text with the number
+    const text = new Text(number.toString(), {
+      fontFamily: 'Arial',
+      fontSize: 10,
+      fontWeight: 'bold',
+      fill: 0xFFFFFF,
+      stroke: 0x000000,
+      align: 'center'
+    });
+
+    text.anchor.set(0.5, 0.5);
+    this.gameContainer.addChild(text);
+
+    // Position text above vulture
+    if (vulture.scale.x == -1) {
+      text.x = vulture.x - vulture.width / 2;
+    } else {
+      text.x = vulture.x + vulture.width / 2;
+    }
+    text.y = vulture.y - 10;
+
+    // Add to vultures array
+    this.vultures.push({
+      vulture,
+      text,
+      number,
+      clicked: false
+    });
+  }
+
+  // Update vulture positions and check if they're off screen
+  private updateVultures() {
+    // Move vultures down
+    for (let i = this.vultures.length - 1; i >= 0; i--) {
+      const vulture = this.vultures[i];
+
+      // Move down
+      vulture.vulture.y += this.vultureMovementSpeed * (1 + (this.difficultyLevel - 1) * 0.1);
+
+      // Update text position
+      if (vulture.vulture.scale.x == -1) {
+        vulture.text.x = vulture.vulture.x - vulture.vulture.width / 2;
+      } else {
+        vulture.text.x = vulture.vulture.x + vulture.vulture.width / 2;
+      }
+      vulture.text.y = vulture.vulture.y - 10;
+
+      // If vulture reaches the player's position, deal damage and remove
+      if (vulture.vulture.y > this.playerIdleAnimation.y - 20 && !vulture.clicked) {
+        this.takeDamage();
+        this.removeVulture(i);
+      }
+    }
+  }
+
+  // Remove a vulture from the screen and array
+  private removeVulture(index: number) {
+    if (index >= 0 && index < this.vultures.length) {
+      // Remove from display
+      this.gameContainer.removeChild(this.vultures[index].vulture);
+      this.gameContainer.removeChild(this.vultures[index].text);
+
+      // Remove from array
+      this.vultures.splice(index, 1);
+    }
+  }
+
+  // Remove all clicked vultures (call after processing a group)
+  private removeClickedVultures() {
+    for (let i = this.vultures.length - 1; i >= 0; i--) {
+      if (this.vultures[i].clicked) {
+        this.removeVulture(i);
+      }
+    }
+  }
+
+  // Check if player clicked on a vulture
+  @HostListener('click', ['$event'])
+  onClick(event: MouseEvent) {
+    // Skip if game is over
+    if (this.isGameOver) return;
+
+    // Get the bounding rectangle of the canvas to account for its position in the page
+    const canvasBounds = this.app.canvas.getBoundingClientRect();
+
+    // Calculate relative position within the canvas
+    const relativeX = event.clientX - canvasBounds.left;
+    const relativeY = event.clientY - canvasBounds.top;
+
+    // Convert to game coordinates (accounting for scale)
+    const clickX = relativeX / this.gameContainer.scale.x;
+    const clickY = relativeY / this.gameContainer.scale.y;
+
+    // Check each vulture to see if it was clicked
+    for (let i = 0; i < this.vultures.length; i++) {
+      const vulture = this.vultures[i];
+
+      // Skip if already clicked
+      if (vulture.clicked) continue;
+
+      // Check if click is on vulture
+      const vultureBounds = {
+        left: vulture.vulture.x,
+        right: vulture.vulture.x + vulture.vulture.width,
+        top: vulture.vulture.y,
+        bottom: vulture.vulture.y + vulture.vulture.height
+      };
+
+      if (
+        clickX >= vultureBounds.left &&
+        clickX <= vultureBounds.right &&
+        clickY >= vultureBounds.top &&
+        clickY <= vultureBounds.bottom
+      ) {
+        // Check if this is the correct vulture in the sequence
+        if (vulture.number === this.currentVultureSequence) {
+          // Correct vulture clicked!
+          vulture.clicked = true;
+
+          // Update visual to show it was clicked
+          vulture.vulture.tint = 0x88FF88; // Green tint
+          vulture.text.style.fill = 0x00FF00; // Green text
+
+          // Award points
+          this.updatePoints(20);
+
+          // Show feedback
+          this.showTypingFeedback(`+20`, 0x00FF00, 500);
+
+          // Move to the next number in sequence
+          this.currentVultureSequence++;
+
+          // Check if we completed a set of vultures
+          if (this.areAllVulturesInSequenceClicked()) {
+            // Award bonus for completing in correct order
+            this.updatePoints(30);
+            this.showTypingFeedback('Sequence Complete! +30', 0xFFFF00, 1000);
+          }
+        } else {
+          // Wrong vulture clicked!
+          this.showTypingFeedback('Wrong order!', 0xFF0000, 500);
+
+          // Small penalty
+          this.updatePoints(-10);
+
+          // Update accuracy
+          this.updateAccuracy(false);
+        }
+
+        // Break as we've handled the click
+        break;
+      }
+    }
+  }
+
+  // Check if all vultures have been clicked
+  private areAllVulturesClicked(): boolean {
+    return this.vultures.every(v => v.clicked);
+  }
+
+  // Check if all vultures in the current sequence have been clicked
+  private areAllVulturesInSequenceClicked(): boolean {
+    // Group vultures by their starting sequence (1-3, 4-6, or 7-9)
+    const sequenceStart = Math.floor((this.currentVultureSequence - 1) / 3) * 3 + 1;
+    const sequenceVultures = this.vultures.filter(v =>
+      v.number >= sequenceStart && v.number < sequenceStart + 3
+    );
+
+    return sequenceVultures.every(v => v.clicked);
   }
 
   spawnAnt() {
@@ -1315,6 +1625,30 @@ export class FastHandsComponent implements OnInit {
     // Update difficulty level based on time
     this.updateDifficulty();
 
+    this.updateVultures();
+
+    this.vultureTickCounter++;
+    if (this.vultureTickCounter >= this.nextVultureSpawnTime) {
+      this.spawnVultureGroup();
+      this.vultureTickCounter = 0;
+
+      // Calculate next spawn time based on difficulty
+      const baseSpawnTime = 2000 - (this.difficultyLevel * 200); // Decreases with difficulty
+      const randomVariation = Math.floor(Math.random() * 500) - 250; // +/- 250 ticks
+      this.nextVultureSpawnTime = Math.max(800, baseSpawnTime + randomVariation);
+
+      this.vultureSpawnCounter++;
+    }
+
+    // Add bonus points for previous group if all were clicked in sequence
+    if (this.areAllVulturesClicked() && this.vultures.length > 0) {
+      this.updatePoints(50); // Bonus for clearing a group
+      this.vultureGroupsDefeated++;
+
+      // Show feedback for clearing a group
+      this.showTypingFeedback('Group Cleared! +50', 0x00FFFF, 1000);
+      this.removeClickedVultures();
+    }
 
     // Get player position
     const playerCenterX = this.playerIdleAnimation.x + this.playerIdleAnimation.width / 2;
@@ -1412,7 +1746,7 @@ export class FastHandsComponent implements OnInit {
 
       // Spawn ant based on the calculated rate
       if (this.tickCounter % Math.floor(currentSpawnRate) == 0) {
-        this.spawnAnt();
+        // this.spawnAnt();
       }
     }
 
@@ -1463,5 +1797,91 @@ export class FastHandsComponent implements OnInit {
 
   public setTargetTime(seconds: number) {
     this.targetTime = seconds;
+  }
+
+  private handleCanvasClick(event: MouseEvent) {
+    console.log("Canvas clicked!");
+
+    // Skip if game is over
+    if (this.isGameOver) return;
+
+    // Get the bounding rectangle of the canvas
+    const canvasBounds = this.app.canvas.getBoundingClientRect();
+
+    // Calculate relative position within the canvas
+    const relativeX = event.clientX - canvasBounds.left;
+    const relativeY = event.clientY - canvasBounds.top;
+
+    // Convert to game coordinates (accounting for scale)
+    const clickX = relativeX / this.gameContainer.scale.x;
+    const clickY = relativeY / this.gameContainer.scale.y;
+
+    console.log(`Click at game coordinates: (${clickX}, ${clickY})`);
+
+    // Check each vulture to see if it was clicked
+    for (let i = 0; i < this.vultures.length; i++) {
+      const vulture = this.vultures[i];
+
+      // Skip if already clicked
+      if (vulture.clicked) continue;
+
+      // Check if click is on vulture
+      const vultureBounds = {
+        left: vulture.vulture.x,
+        right: vulture.vulture.x + vulture.vulture.width,
+        top: vulture.vulture.y,
+        bottom: vulture.vulture.y + vulture.vulture.height
+      };
+
+      // Log vulture bounds for debugging
+      console.log(`Vulture ${i} bounds:`, vultureBounds);
+
+      if (
+        clickX >= vultureBounds.left &&
+        clickX <= vultureBounds.right &&
+        clickY >= vultureBounds.top &&
+        clickY <= vultureBounds.bottom
+      ) {
+        console.log(`Clicked on vulture ${i} with number ${vulture.number}`);
+
+        // Check if this is the correct vulture in the sequence
+        if (vulture.number === this.currentVultureSequence) {
+          // Correct vulture clicked!
+          vulture.clicked = true;
+
+          // Update visual to show it was clicked
+          vulture.vulture.tint = 0x88FF88; // Green tint
+          vulture.text.style.fill = 0x00FF00; // Green text
+
+          // Award points
+          this.updatePoints(20);
+
+          // Show feedback
+          this.showTypingFeedback(`+20`, 0x00FF00, 500);
+
+          // Move to the next number in sequence
+          this.currentVultureSequence++;
+
+          // Check if we completed a set of vultures
+          if (this.areAllVulturesInSequenceClicked()) {
+            // Award bonus for completing in correct order
+            this.updatePoints(30);
+            this.showTypingFeedback('Sequence Complete! +30', 0xFFFF00, 1000);
+          }
+        } else {
+          // Wrong vulture clicked!
+          this.showTypingFeedback('Wrong order!', 0xFF0000, 500);
+
+          // Small penalty
+          this.updatePoints(-10);
+
+          // Update accuracy
+          this.updateAccuracy(false);
+        }
+
+        // Break as we've handled the click
+        break;
+      }
+    }
   }
 }
