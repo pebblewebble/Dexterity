@@ -1,6 +1,7 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { Assets, Application, AnimatedSprite, Sprite, Spritesheet, TexturePool, Texture, Container, Text, Graphics, TextStyle } from 'pixi.js';
 
+//to fix the different group vulture click, just give another attribute to it and check honestly, like group id
 interface AntWithText {
   ant: AnimatedSprite;
   text: Text;
