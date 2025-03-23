@@ -83,7 +83,7 @@ export class FastHandsComponent implements OnInit {
   private vultureMovementSpeed: number = 0.03;
   private vultureSpawnCounter: number = 0;
   private vultureTickCounter: number = 0;
-  private nextVultureSpawnTime: number = 100; // Time in ticks before first vulture group
+  private nextVultureSpawnTime: number = 700; // Time in ticks before first vulture group
   private currentVultureSequence: number = -1; // Track which number in the sequence (1-3) is next to click
   private vultureGroupsDefeated: number = 0;
 
@@ -919,7 +919,7 @@ export class FastHandsComponent implements OnInit {
     // Set up keyboard listeners
     this.setupKeyboardListeners();
 
-    // this.spawnAnt();
+    this.spawnAnt();
   }
 
   private setupFocusedWordView() {
@@ -1129,9 +1129,9 @@ export class FastHandsComponent implements OnInit {
     }
 
     // Reset the current sequence for this new group
-    if (this.currentVultureSequence === -1) {
-      this.currentVultureSequence = startNumber;
-    }
+    // if (this.currentVultureSequence === -1) {
+    //   this.currentVultureSequence = startNumber;
+    // }
   }
 
   private getRandomVulturePositions(count: number): { x: number }[] {
@@ -1238,7 +1238,7 @@ export class FastHandsComponent implements OnInit {
       vulture.text.y = vulture.vulture.y - 10;
 
       // If vulture reaches the player's position, deal damage and remove
-      if (vulture.vulture.y > this.playerIdleAnimation.y - 20 && !vulture.clicked) {
+      if (vulture.vulture.y > this.playerIdleAnimation.y - 20) {
         this.takeDamage();
         this.removeVulture(i);
       }
@@ -1262,85 +1262,6 @@ export class FastHandsComponent implements OnInit {
     for (let i = this.vultures.length - 1; i >= 0; i--) {
       if (this.vultures[i].clicked) {
         this.removeVulture(i);
-      }
-    }
-  }
-
-  // Check if player clicked on a vulture
-  @HostListener('click', ['$event'])
-  onClick(event: MouseEvent) {
-    // Skip if game is over
-    if (this.isGameOver) return;
-
-    // Get the bounding rectangle of the canvas to account for its position in the page
-    const canvasBounds = this.app.canvas.getBoundingClientRect();
-
-    // Calculate relative position within the canvas
-    const relativeX = event.clientX - canvasBounds.left;
-    const relativeY = event.clientY - canvasBounds.top;
-
-    // Convert to game coordinates (accounting for scale)
-    const clickX = relativeX / this.gameContainer.scale.x;
-    const clickY = relativeY / this.gameContainer.scale.y;
-
-    // Check each vulture to see if it was clicked
-    for (let i = 0; i < this.vultures.length; i++) {
-      const vulture = this.vultures[i];
-
-      // Skip if already clicked
-      if (vulture.clicked) continue;
-
-      // Check if click is on vulture
-      const vultureBounds = {
-        left: vulture.vulture.x,
-        right: vulture.vulture.x + vulture.vulture.width,
-        top: vulture.vulture.y,
-        bottom: vulture.vulture.y + vulture.vulture.height
-      };
-
-      if (
-        clickX >= vultureBounds.left &&
-        clickX <= vultureBounds.right &&
-        clickY >= vultureBounds.top &&
-        clickY <= vultureBounds.bottom
-      ) {
-        // Check if this is the correct vulture in the sequence
-        if (vulture.number === this.currentVultureSequence) {
-          // Correct vulture clicked!
-          vulture.clicked = true;
-
-          // Update visual to show it was clicked
-          vulture.vulture.tint = 0x88FF88; // Green tint
-          vulture.text.style.fill = 0x00FF00; // Green text
-
-          // Award points
-          this.updatePoints(20);
-
-          // Show feedback
-          this.showTypingFeedback(`+20`, 0x00FF00, 500);
-
-          // Move to the next number in sequence
-          this.currentVultureSequence++;
-
-          // Check if we completed a set of vultures
-          if (this.areAllVulturesInSequenceClicked()) {
-            // Award bonus for completing in correct order
-            this.updatePoints(30);
-            this.showTypingFeedback('Sequence Complete! +30', 0xFFFF00, 1000);
-          }
-        } else {
-          // Wrong vulture clicked!
-          this.showTypingFeedback('Wrong order!', 0xFF0000, 500);
-
-          // Small penalty
-          this.updatePoints(-10);
-
-          // Update accuracy
-          this.updateAccuracy(false);
-        }
-
-        // Break as we've handled the click
-        break;
       }
     }
   }
@@ -1641,14 +1562,7 @@ export class FastHandsComponent implements OnInit {
     }
 
     // Add bonus points for previous group if all were clicked in sequence
-    if (this.areAllVulturesClicked() && this.vultures.length > 0) {
-      this.updatePoints(50); // Bonus for clearing a group
-      this.vultureGroupsDefeated++;
 
-      // Show feedback for clearing a group
-      this.showTypingFeedback('Group Cleared! +50', 0x00FFFF, 1000);
-      this.removeClickedVultures();
-    }
 
     // Get player position
     const playerCenterX = this.playerIdleAnimation.x + this.playerIdleAnimation.width / 2;
@@ -1746,7 +1660,7 @@ export class FastHandsComponent implements OnInit {
 
       // Spawn ant based on the calculated rate
       if (this.tickCounter % Math.floor(currentSpawnRate) == 0) {
-        // this.spawnAnt();
+        this.spawnAnt();
       }
     }
 
@@ -1825,13 +1739,23 @@ export class FastHandsComponent implements OnInit {
       // Skip if already clicked
       if (vulture.clicked) continue;
 
-      // Check if click is on vulture
-      const vultureBounds = {
-        left: vulture.vulture.x,
-        right: vulture.vulture.x + vulture.vulture.width,
-        top: vulture.vulture.y,
-        bottom: vulture.vulture.y + vulture.vulture.height
-      };
+      var vultureBounds:any = []     // Check if click is on vulture
+
+      if (vulture.vulture.scale.x === -1) {
+        vultureBounds = {
+          left: vulture.vulture.x - vulture.vulture.width,
+          right: vulture.vulture.x,
+          top: vulture.vulture.y,
+          bottom: vulture.vulture.y + vulture.vulture.height
+        }
+      } else {
+        vultureBounds = {
+          left: vulture.vulture.x,
+          right: vulture.vulture.x + vulture.vulture.width,
+          top: vulture.vulture.y,
+          bottom: vulture.vulture.y + vulture.vulture.height
+        }
+      }
 
       // Log vulture bounds for debugging
       console.log(`Vulture ${i} bounds:`, vultureBounds);
@@ -1844,6 +1768,26 @@ export class FastHandsComponent implements OnInit {
       ) {
         console.log(`Clicked on vulture ${i} with number ${vulture.number}`);
 
+        if ([1, 4, 7].includes(vulture.number) && this.currentVultureSequence === -1) {
+          this.currentVultureSequence = vulture.number;
+          vulture.clicked = true;
+          // Update visual to show it was clicked
+          vulture.vulture.tint = 0x88FF88; // Green tint
+          vulture.text.style.fill = 0x00FF00; // Green text
+
+          // Award points
+          this.updatePoints(20);
+
+          // Show feedback
+          this.showTypingFeedback(`+20`, 0x00FF00, 500);
+
+          this.updateAccuracy(true);
+
+          // Move to the next number in sequence
+          this.currentVultureSequence++;
+
+          break;
+        }
         // Check if this is the correct vulture in the sequence
         if (vulture.number === this.currentVultureSequence) {
           // Correct vulture clicked!
@@ -1859,6 +1803,8 @@ export class FastHandsComponent implements OnInit {
           // Show feedback
           this.showTypingFeedback(`+20`, 0x00FF00, 500);
 
+          this.updateAccuracy(true);
+
           // Move to the next number in sequence
           this.currentVultureSequence++;
 
@@ -1866,7 +1812,10 @@ export class FastHandsComponent implements OnInit {
           if (this.areAllVulturesInSequenceClicked()) {
             // Award bonus for completing in correct order
             this.updatePoints(30);
+            this.vultureGroupsDefeated++;
             this.showTypingFeedback('Sequence Complete! +30', 0xFFFF00, 1000);
+            this.removeClickedVultures();
+            this.currentVultureSequence = -1;
           }
         } else {
           // Wrong vulture clicked!
