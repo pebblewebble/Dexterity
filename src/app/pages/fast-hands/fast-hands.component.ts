@@ -13,6 +13,7 @@ interface VultureWithText {
   text: Text;
   number: number;
   clicked: boolean;
+  group: number;
 }
 
 @Component({
@@ -87,6 +88,8 @@ export class FastHandsComponent implements OnInit {
   private nextVultureSpawnTime: number = 700; // Time in ticks before first vulture group
   private currentVultureSequence: number = -1; // Track which number in the sequence (1-3) is next to click
   private vultureGroupsDefeated: number = 0;
+  private vultureGroups: number = 0;
+  private currentVultureGroup: number = 0;
 
   // Word categories for different themes
   private wordCategories = {
@@ -1129,6 +1132,8 @@ export class FastHandsComponent implements OnInit {
       this.spawnVulture(positions[i].x, startNumber + i);
     }
 
+    this.vultureGroups++;
+
     // Reset the current sequence for this new group
     // if (this.currentVultureSequence === -1) {
     //   this.currentVultureSequence = startNumber;
@@ -1217,7 +1222,8 @@ export class FastHandsComponent implements OnInit {
       vulture,
       text,
       number,
-      clicked: false
+      clicked: false,
+      group: this.vultureGroups
     });
   }
 
@@ -1740,7 +1746,7 @@ export class FastHandsComponent implements OnInit {
       // Skip if already clicked
       if (vulture.clicked) continue;
 
-      var vultureBounds:any = []     // Check if click is on vulture
+      var vultureBounds: any = []     // Check if click is on vulture
 
       if (vulture.vulture.scale.x === -1) {
         vultureBounds = {
@@ -1771,6 +1777,7 @@ export class FastHandsComponent implements OnInit {
 
         if ([1, 4, 7].includes(vulture.number) && this.currentVultureSequence === -1) {
           this.currentVultureSequence = vulture.number;
+          this.currentVultureGroup = vulture.group;
           vulture.clicked = true;
           // Update visual to show it was clicked
           vulture.vulture.tint = 0x88FF88; // Green tint
@@ -1790,7 +1797,11 @@ export class FastHandsComponent implements OnInit {
           break;
         }
         // Check if this is the correct vulture in the sequence
-        if (vulture.number === this.currentVultureSequence) {
+        // console.log(vulture.number)
+        // console.log(this.currentVultureSequence)
+        // console.log(vulture.group)
+        // console.log(this.currentVultureGroup)
+        if (vulture.number === this.currentVultureSequence && vulture.group == this.currentVultureGroup) {
           // Correct vulture clicked!
           vulture.clicked = true;
 
