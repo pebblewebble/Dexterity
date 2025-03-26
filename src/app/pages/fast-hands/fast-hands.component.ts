@@ -1821,7 +1821,9 @@ export class FastHandsComponent implements OnInit {
           this.currentVultureSequence++;
 
           // Check if we completed a set of vultures
-          if (this.areAllVulturesInSequenceClicked()) {
+          // We probably don't need another specific function to check since we already follow currentvulturesequence
+          // if (this.areAllVulturesInSequenceClicked()) {
+          if([4,7,10].includes(this.currentVultureSequence)){
             // Award bonus for completing in correct order
             this.updatePoints(30);
             this.vultureGroupsDefeated++;
