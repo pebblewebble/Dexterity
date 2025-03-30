@@ -47,7 +47,6 @@ export class FastHandsComponent implements OnInit {
 
   // Text visibility management
   private maxVisibleTexts: number = 5; // Maximum number of visible texts at once
-  private textVisibilityDistance: number = 100; // Distance threshold to show text
 
   // Typing feedback properties
   private typingFeedback!: Text;
@@ -56,7 +55,6 @@ export class FastHandsComponent implements OnInit {
   //Red Sphere
   private targetIndicator!: Graphics;
   private targetPosition = { x: 0, y: 0 };
-  private targetVelocity = { x: 0, y: 0 };
   private targetTime = 0.3; // Time to reach target in seconds (customizable)
   private lastActiveAntIndex = -1; // Track the last highlighted ant
 
@@ -1270,22 +1268,6 @@ export class FastHandsComponent implements OnInit {
     }
   }
 
-  // Check if all vultures have been clicked
-  private areAllVulturesClicked(): boolean {
-    return this.vultures.every(v => v.clicked);
-  }
-
-  // Check if all vultures in the current sequence have been clicked
-  private areAllVulturesInSequenceClicked(): boolean {
-    // Group vultures by their starting sequence (1-3, 4-6, or 7-9)
-    const sequenceStart = Math.floor((this.currentVultureSequence - 1) / 3) * 3 + 1;
-    const sequenceVultures = this.vultures.filter(v =>
-      v.number >= sequenceStart && v.number < sequenceStart + 3
-    );
-
-    return sequenceVultures.every(v => v.clicked);
-  }
-
   spawnAnt() {
     // Create ant sprite
     const newAnt = new AnimatedSprite(this.antSpriteSheet.animations['walk']);
@@ -1563,8 +1545,6 @@ export class FastHandsComponent implements OnInit {
     // Add bonus points for previous group if all were clicked in sequence
 
 
-    // Get player position
-    const playerCenterX = this.playerIdleAnimation.x + this.playerIdleAnimation.width / 2;
 
     // Keep track of ants to remove after the loop
     const antsToRemove: number[] = [];
@@ -1701,11 +1681,6 @@ export class FastHandsComponent implements OnInit {
         this.ants[antInfo.index].text.visible = false;
       }
     }
-  }
-
-  public adjustTextVisibility(maxVisible: number, visibilityDistance: number) {
-    this.maxVisibleTexts = maxVisible;
-    this.textVisibilityDistance = visibilityDistance;
   }
 
   public setTargetTime(seconds: number) {
