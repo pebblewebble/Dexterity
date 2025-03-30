@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Assets, Application, AnimatedSprite, Sprite, Spritesheet, TexturePool, Texture, Container, Text, Graphics, TextStyle } from 'pixi.js';
 
@@ -22,7 +22,8 @@ interface VultureWithText {
   selector: 'app-fast-hands',
   imports: [CommonModule,FormsModule],
   templateUrl: './fast-hands.component.html',
-  styleUrl: './fast-hands.component.css'
+  styleUrl: './fast-hands.component.css',
+  encapsulation:ViewEncapsulation.None
 })
 export class FastHandsComponent implements OnInit {
   @ViewChild('popupElement') popupElement!: ElementRef;
@@ -69,7 +70,7 @@ export class FastHandsComponent implements OnInit {
   private isShowingAnnouncement = false;
   private announcementTimer = 0;
 
-  private playerHealth = 15; // Starting health
+  private playerHealth = 1; // Starting health
   private healthText!: Text; // Text display for health
   private isGameOver = false; // Track game over state
 
