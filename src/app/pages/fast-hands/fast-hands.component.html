@@ -1,0 +1,29 @@
+
+<div class="popup-container" [style.display]="isScorePopupVisible ? 'flex' : 'none'">
+  <div class="popup-overlay"></div>
+  <div class="popup" #popupElement>
+    <button class="close-btn" (click)="hideScorePopup()"></button>
+    <div class="popup-header">
+      <h2 class="popup-title">High Score!</h2>
+      <p class="popup-subtitle">Save your achievement to the leaderboard</p>
+    </div>
+
+    <div class="score-display">
+      <div class="score-value" id="scoreValue">{{formatScore(playerPoints)}}</div>
+    </div>
+
+    <form id="scoreForm" (ngSubmit)="submitScore()">
+      <div class="form-group">
+        <label for="playerName" class="form-label">Your Name</label>
+        <input type="text" id="playerName" class="form-input" placeholder="Enter your name"
+               maxlength="20" required [(ngModel)]="playerName" name="playerName">
+        <div class="input-glow"></div>
+      </div>
+
+      <div class="btn-container">
+        <button type="button" class="btn btn-secondary" (click)="hideScorePopup()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Score</button>
+      </div>
+    </form>
+  </div>
+</div>

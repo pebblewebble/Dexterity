@@ -1,4 +1,6 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Assets, Application, AnimatedSprite, Sprite, Spritesheet, TexturePool, Texture, Container, Text, Graphics, TextStyle } from 'pixi.js';
 
 //to fix the different group vulture click, just give another attribute to it and check honestly, like group id
@@ -18,18 +20,19 @@ interface VultureWithText {
 
 @Component({
   selector: 'app-fast-hands',
-  imports: [],
+  imports: [CommonModule,FormsModule],
   templateUrl: './fast-hands.component.html',
   styleUrl: './fast-hands.component.css'
 })
 export class FastHandsComponent implements OnInit {
+  @ViewChild('popupElement') popupElement!: ElementRef;
   private app: any;
   private gameContainer!: Container;
   private floorContainer!: Container;
   private playerIdleAnimation!: AnimatedSprite;
   private antSpriteSheet!: Spritesheet;
   private ants: AntWithText[] = [];
-  private antsMovementSpeed: number = .08;
+  private antsMovementSpeed: number = .8;
   private tickCounter: number = 0;
   private antCounter: number = 0;
 
@@ -70,7 +73,7 @@ export class FastHandsComponent implements OnInit {
   private healthText!: Text; // Text display for health
   private isGameOver = false; // Track game over state
 
-  private playerPoints = 0;
+  playerPoints = 0;
   private correctKeyPresses = 0;
   private totalKeyPresses = 0;
   private gameStartTime = 0;
@@ -88,6 +91,9 @@ export class FastHandsComponent implements OnInit {
   private vultureGroupsDefeated: number = 0;
   private vultureGroups: number = 0;
   private currentVultureGroup: number = 0;
+
+  isScorePopupVisible: boolean = false;
+  playerName: string = '';
 
   // Word categories for different themes
   private wordCategories = {
@@ -278,7 +284,7 @@ export class FastHandsComponent implements OnInit {
 
   // Add this method to update accuracy
   private updateAccuracy(correct: boolean) {
-    if (!this.accuracyText || this.tickCounter<1000 ) return;
+    if (!this.accuracyText || this.tickCounter < 1000) return;
 
     this.totalKeyPresses++;
 
@@ -396,8 +402,10 @@ export class FastHandsComponent implements OnInit {
 
     this.gameContainer.addChild(restartText);
 
-    // Stop spawning ants
-    // We'll handle this in simulateTick by checking isGameOver
+    setTimeout(() => {
+      this.showScorePopup();
+    }, 1500);
+
   }
 
   private setupLevelAnnouncement() {
@@ -923,6 +931,87 @@ export class FastHandsComponent implements OnInit {
     this.setupKeyboardListeners();
 
     this.spawnAnt();
+  }
+
+  ngAfterViewInit() {
+    // We can initialize any popup-specific DOM manipulations here
+    if (this.popupElement) {
+      this.createSparkles();
+    }
+  }
+
+  // Create sparkle effects for the popup
+  private createSparkles() {
+    const popup = this.popupElement.nativeElement;
+    for (let i = 0; i < 15; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.classList.add('sparkles');
+
+      // Random position around the popup
+      const posX = Math.random() * 100;
+      const posY = Math.random() * 100;
+
+      sparkle.style.left = posX + '%';
+      sparkle.style.top = posY + '%';
+
+      // Random delay
+      sparkle.style.animationDelay = Math.random() * 2 + 's';
+
+      popup.appendChild(sparkle);
+    }
+  }
+
+  // Show the high score popup
+  showScorePopup() {
+    this.isScorePopupVisible = true;
+    this.playerName = ''; // Reset player name
+  }
+
+  // Hide the high score popup
+  hideScorePopup() {
+    const popup = this.popupElement.nativeElement;
+    popup.style.animation = 'slideUp 0.5s ease reverse forwards';
+
+    setTimeout(() => {
+      const container = popup.parentElement;
+      container.style.animation = 'fadeIn 0.5s ease reverse forwards';
+
+      setTimeout(() => {
+        this.isScorePopupVisible = false;
+      }, 500);
+    }, 400);
+  }
+
+  // Handle form submission
+  submitScore() {
+    if (this.playerName.trim() === '') {
+      return; // Don't submit if name is empty
+    }
+
+    console.log('Player name:', this.playerName);
+    console.log('Score:', this.playerPoints);
+
+    // Here you would implement your leaderboard saving logic
+    // For example, you might call a service to save to a database
+
+    // Hide the popup after submission
+    this.hideScorePopup();
+
+    // You could also dispatch a custom event if needed
+    window.dispatchEvent(new CustomEvent('scoreSubmitted', {
+      detail: {
+        playerName: this.playerName,
+        score: this.playerPoints
+      }
+    }));
+
+    // Reset game or return to menu as needed
+    this.restartGame();
+  }
+
+  // Format score with commas
+  formatScore(score: number): string {
+    return new Intl.NumberFormat().format(score);
   }
 
   private setupFocusedWordView() {
