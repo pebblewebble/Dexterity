@@ -280,7 +280,7 @@ export class FastHandsComponent implements OnInit {
 
   // Add this method to update accuracy
   private updateAccuracy(correct: boolean) {
-    if (!this.accuracyText) return;
+    if (!this.accuracyText || this.tickCounter<1000 ) return;
 
     this.totalKeyPresses++;
 
@@ -564,6 +564,7 @@ export class FastHandsComponent implements OnInit {
 
   private handleTyping(event: KeyboardEvent) {
     // Ignore special keys like arrows, shift, etc.
+    console.log(this.playerHealth)
     if (event.key.length !== 1 && event.key !== 'Backspace') {
       return;
     }
@@ -1134,10 +1135,6 @@ export class FastHandsComponent implements OnInit {
 
     this.vultureGroups++;
 
-    // Reset the current sequence for this new group
-    // if (this.currentVultureSequence === -1) {
-    //   this.currentVultureSequence = startNumber;
-    // }
   }
 
   private getRandomVulturePositions(count: number): { x: number }[] {
@@ -1368,11 +1365,6 @@ export class FastHandsComponent implements OnInit {
     this.targetIndicator.beginFill(0xFF0000, 0.7);
     this.targetIndicator.drawCircle(0, 0, 2);
     this.targetIndicator.endFill();
-
-    // Add a subtle glow effect
-    // this.targetIndicator.beginFill(0xFF0000, 0.2);
-    // this.targetIndicator.drawCircle(0, 0, 12);
-    // this.targetIndicator.endFill();
 
     // Add to the game container with high zIndex to stay above ants
     this.targetIndicator.zIndex = 2000;
@@ -1797,10 +1789,6 @@ export class FastHandsComponent implements OnInit {
           break;
         }
         // Check if this is the correct vulture in the sequence
-        // console.log(vulture.number)
-        // console.log(this.currentVultureSequence)
-        // console.log(vulture.group)
-        // console.log(this.currentVultureGroup)
         if (vulture.number === this.currentVultureSequence && vulture.group == this.currentVultureGroup) {
           // Correct vulture clicked!
           vulture.clicked = true;
@@ -1823,7 +1811,7 @@ export class FastHandsComponent implements OnInit {
           // Check if we completed a set of vultures
           // We probably don't need another specific function to check since we already follow currentvulturesequence
           // if (this.areAllVulturesInSequenceClicked()) {
-          if([4,7,10].includes(this.currentVultureSequence)){
+          if ([4, 7, 10].includes(this.currentVultureSequence)) {
             // Award bonus for completing in correct order
             this.updatePoints(30);
             this.vultureGroupsDefeated++;
