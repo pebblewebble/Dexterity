@@ -285,7 +285,7 @@ export class FastHandsComponent implements OnInit {
 
   // Add this method to update accuracy
   private updateAccuracy(correct: boolean) {
-    if (!this.accuracyText || this.tickCounter < 1000) return;
+    if (!this.accuracyText ) return;
 
     this.totalKeyPresses++;
 
@@ -508,7 +508,7 @@ export class FastHandsComponent implements OnInit {
     this.keysPressed[event.key] = true;
 
     // Check for restart when game is over
-    if (this.isGameOver && (event.key === 'r' || event.key === 'R')) {
+    if (this.isGameOver && (event.key === 'r' || event.key === 'R') && !this.isScorePopupVisible) {
       this.restartGame();
     }
   }
@@ -571,8 +571,7 @@ export class FastHandsComponent implements OnInit {
 
   private handleTyping(event: KeyboardEvent) {
     // Ignore special keys like arrows, shift, etc.
-    console.log(this.playerHealth)
-    if (event.key.length !== 1 && event.key !== 'Backspace') {
+    if ((event.key.length !== 1 && event.key !== 'Backspace')||this.isScorePopupVisible) {
       return;
     }
 
@@ -999,12 +998,12 @@ export class FastHandsComponent implements OnInit {
     this.hideScorePopup();
 
     // You could also dispatch a custom event if needed
-    window.dispatchEvent(new CustomEvent('scoreSubmitted', {
-      detail: {
-        playerName: this.playerName,
-        score: this.playerPoints
-      }
-    }));
+    // window.dispatchEvent(new CustomEvent('scoreSubmitted', {
+    //   detail: {
+    //     playerName: this.playerName,
+    //     score: this.playerPoints
+    //   }
+    // }));
 
     // Reset game or return to menu as needed
     this.restartGame();
