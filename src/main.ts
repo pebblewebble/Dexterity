@@ -5,11 +5,12 @@ import { CounterstrafeComponent } from './app/pages/counterstrafe/counterstrafe.
 import { HomeComponent } from './app/pages/home/home.component';
 import { provideRouter } from '@angular/router';
 import { routes } from './app/app.routes';
+import { provideHttpClient } from '@angular/common/http';
 
 // bootstrapApplication(AppComponent, appConfig)
 //   .catch((err) => console.error(err));
 
 // bootstrapApplication(CounterstrafeComponent).catch((err)=>console.error(err));
 bootstrapApplication(AppComponent, {
-  providers: [provideRouter(routes)]
+  providers: [provideRouter(routes),provideHttpClient()]
 });
