@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostListener, importProvidersFrom, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Assets, Application, AnimatedSprite, Sprite, Spritesheet, TexturePool, Texture, Container, Text, Graphics, TextStyle } from 'pixi.js';
+import { environment } from '../../../environment'
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 //to fix the different group vulture click, just give another attribute to it and check honestly, like group id
 interface AntWithText {
@@ -20,10 +24,10 @@ interface VultureWithText {
 
 @Component({
   selector: 'app-fast-hands',
-  imports: [CommonModule,FormsModule],
+  imports: [CommonModule, FormsModule,],
   templateUrl: './fast-hands.component.html',
   styleUrl: './fast-hands.component.css',
-  encapsulation:ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class FastHandsComponent implements OnInit {
   @ViewChild('popupElement') popupElement!: ElementRef;
@@ -33,7 +37,7 @@ export class FastHandsComponent implements OnInit {
   private playerIdleAnimation!: AnimatedSprite;
   private antSpriteSheet!: Spritesheet;
   private ants: AntWithText[] = [];
-  private antsMovementSpeed: number = .8;
+  private antsMovementSpeed: number = .08;
   private tickCounter: number = 0;
   private antCounter: number = 0;
 
@@ -70,7 +74,7 @@ export class FastHandsComponent implements OnInit {
   private isShowingAnnouncement = false;
   private announcementTimer = 0;
 
-  private playerHealth = 1; // Starting health
+  private playerHealth = 15; // Starting health
   private healthText!: Text; // Text display for health
   private isGameOver = false; // Track game over state
 
@@ -208,7 +212,7 @@ export class FastHandsComponent implements OnInit {
     ]
   };
 
-  constructor() {
+  constructor(private http: HttpClient) {
     setInterval(() => this.simulateTick(), 10);
     this.levelStartTime = Date.now();
   }
@@ -285,7 +289,7 @@ export class FastHandsComponent implements OnInit {
 
   // Add this method to update accuracy
   private updateAccuracy(correct: boolean) {
-    if (!this.accuracyText ) return;
+    if (!this.accuracyText) return;
 
     this.totalKeyPresses++;
 
@@ -368,40 +372,6 @@ export class FastHandsComponent implements OnInit {
 
   private gameOver() {
     this.isGameOver = true;
-
-    // Create game over text
-    const gameOverText = new Text('GAME OVER', {
-      fontFamily: 'Arial',
-      fontSize: 36,
-      fontWeight: 'bold',
-      fill: 0xFF0000, // Red text
-      stroke: 0x000000,
-      align: 'center'
-    });
-
-    // Center the text
-    gameOverText.anchor.set(0.5);
-    gameOverText.x = (this.app.screen.width / 3) / 2;
-    gameOverText.y = (this.app.screen.height / 3) / 2;
-
-    // Add to game container
-    this.gameContainer.addChild(gameOverText);
-
-    // Add restart instructions
-    const restartText = new Text('Press R to restart', {
-      fontFamily: 'Arial',
-      fontSize: 18,
-      fill: 0xFFFFFF,
-      stroke: 0x000000,
-      align: 'center'
-    });
-
-    // Position below game over text
-    restartText.anchor.set(0.5);
-    restartText.x = (this.app.screen.width / 3) / 2;
-    restartText.y = gameOverText.y + 50;
-
-    this.gameContainer.addChild(restartText);
 
     setTimeout(() => {
       this.showScorePopup();
@@ -509,7 +479,7 @@ export class FastHandsComponent implements OnInit {
 
     // Check for restart when game is over
     if (this.isGameOver && (event.key === 'r' || event.key === 'R') && !this.isScorePopupVisible) {
-      this.restartGame();
+      // this.restartGame();
     }
   }
 
@@ -571,7 +541,7 @@ export class FastHandsComponent implements OnInit {
 
   private handleTyping(event: KeyboardEvent) {
     // Ignore special keys like arrows, shift, etc.
-    if ((event.key.length !== 1 && event.key !== 'Backspace')||this.isScorePopupVisible) {
+    if ((event.key.length !== 1 && event.key !== 'Backspace') || this.isScorePopupVisible) {
       return;
     }
 
@@ -980,10 +950,12 @@ export class FastHandsComponent implements OnInit {
         this.isScorePopupVisible = false;
       }, 500);
     }, 400);
+
+    this.restartGame();
   }
 
   // Handle form submission
-  submitScore() {
+  async submitScore() {
     if (this.playerName.trim() === '') {
       return; // Don't submit if name is empty
     }
@@ -994,16 +966,28 @@ export class FastHandsComponent implements OnInit {
     // Here you would implement your leaderboard saving logic
     // For example, you might call a service to save to a database
 
+    try {
+      const accuracyValue = parseFloat(
+        this.accuracyText.text.replace("Accuracy: ", "").replace("%", "")
+      );
+      const timeValue = this.gameTimer.text.replace("Time: ","")
+      const scoreData = {
+        player_name: this.playerName,
+        points: this.playerPoints,
+        accuracy: accuracyValue,
+        time: timeValue
+      }
+
+      const response = await firstValueFrom(this.http.post(`${environment.apiUrl}/fast-hands/save-score`, scoreData));
+
+      console.log(response);
+
+    } catch (error) {
+      console.error('Error submitting score:' + error);
+    }
+
     // Hide the popup after submission
     this.hideScorePopup();
-
-    // You could also dispatch a custom event if needed
-    // window.dispatchEvent(new CustomEvent('scoreSubmitted', {
-    //   detail: {
-    //     playerName: this.playerName,
-    //     score: this.playerPoints
-    //   }
-    // }));
 
     // Reset game or return to menu as needed
     this.restartGame();
