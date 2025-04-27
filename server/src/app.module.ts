@@ -3,6 +3,8 @@ import {ConfigModule} from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FastHandsModule } from './fast-hands/fast-hands.module';
+import { GameService } from './fast-hands-mp/fast-hands-mp.service';
+import { GameGateWay } from './fast-hands-mp/fast-hands-gateway';
 
 @Module({
   imports: [
@@ -10,6 +12,6 @@ import { FastHandsModule } from './fast-hands/fast-hands.module';
     FastHandsModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, GameService, GameGateWay],
 })
 export class AppModule {}
