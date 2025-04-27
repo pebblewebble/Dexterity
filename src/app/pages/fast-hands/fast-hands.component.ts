@@ -328,6 +328,7 @@ export class FastHandsComponent implements OnInit {
     const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     this.gameTimer.text = `Time: ${formattedTime}`;
   }
+
   private updateHealthDisplay() {
     // Create heart string based on current health
     let hearts = '';
@@ -1549,6 +1550,7 @@ export class FastHandsComponent implements OnInit {
       this.targetPosition = { x: antCenterX, y: antCenterY };
     }
   }
+
   private removeAnt(index: number) {
     if (index >= 0 && index < this.ants.length) {
       // Remove the ant and text from the container

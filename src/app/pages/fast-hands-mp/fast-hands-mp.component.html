@@ -1,0 +1,115 @@
+<div class="game-container">
+  <!-- Initial Menu - Waiting Room -->
+  <div class="waiting-room" *ngIf="isWaitingRoom">
+    <div class="logo-container">
+      <h1>Fast Hands</h1>
+      <h2>Multiplayer Edition</h2>
+    </div>
+
+    <div class="menu-options">
+      <button class="menu-button primary-button" (click)="createRoom()">Create Game</button>
+      <div class="divider">OR</div>
+
+      <div class="join-room-container">
+        <input
+          type="text"
+          [(ngModel)]="roomInputValue"
+          placeholder="Enter Room Code"
+          class="room-input"
+          maxlength="6"
+        />
+        <button
+          class="menu-button secondary-button"
+          (click)="joinRoom()"
+          [disabled]="!roomInputValue"
+        >
+          Join Game
+        </button>
+      </div>
+
+      <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+    </div>
+  </div>
+
+  <!-- Lobby - Waiting for other player -->
+  <div class="lobby" *ngIf="!isWaitingRoom && !gameStarted">
+    <h2>Game Lobby</h2>
+    <div class="room-info">
+      <p>Room Code: <span class="room-code">{{ roomId }}</span></p>
+      <button class="copy-button" (click)="copyShareLink()">
+        Copy Invite Link
+      </button>
+    </div>
+
+    <div class="players-container">
+      <div class="player-box">
+        <div class="player-icon left"></div>
+        <p>You ({{ playerPosition === 'left' ? 'Left' : 'Right' }} Player)</p>
+        <button
+          class="ready-button"
+          [class.ready]="playerReady"
+          (click)="markReady()"
+        >
+          {{ playerReady ? 'Ready!' : 'Click when ready' }}
+        </button>
+      </div>
+
+      <div class="player-box" *ngIf="opponents.length > 0">
+        <div class="player-icon right"></div>
+        <p>Opponent ({{ opponents[0].position === 'left' ? 'Left' : 'Right' }} Player)</p>
+        <div class="status-indicator" [class.ready]="opponentReady">
+          {{ opponentReady ? 'Ready!' : 'Waiting...' }}
+        </div>
+      </div>
+
+      <div class="player-box empty" *ngIf="opponents.length === 0">
+        <div class="player-icon empty"></div>
+        <p>Waiting for opponent...</p>
+      </div>
+    </div>
+
+    <p class="instruction-text">Both players must be ready to start the game.</p>
+
+    <button class="back-button" (click)="disconnectFromServer(); isWaitingRoom = true;">
+      Back to Menu
+    </button>
+  </div>
+
+  <!-- Game Canvas - Only visible when game is started -->
+  <div #gameCanvas class="game-canvas" *ngIf="gameStarted"></div>
+
+  <!-- Score Popup -->
+  <div class="score-popup-overlay" *ngIf="isScorePopupVisible">
+    <div class="score-popup" #popupElement>
+      <h2>Game Over!</h2>
+
+      <div class="final-score">
+        <h3>Your Score: {{ formatScore(playerScore) }}</h3>
+      </div>
+
+      <div class="name-input">
+        <label for="playerName">Enter your name:</label>
+        <input
+          type="text"
+          id="playerName"
+          [(ngModel)]="playerName"
+          placeholder="Your name"
+          maxlength="15"
+        />
+      </div>
+
+      <div class="popup-buttons">
+        <button
+          class="submit-button"
+          [disabled]="!playerName.trim()"
+          (click)="submitScore()"
+        >
+          Submit Score
+        </button>
+        <button class="cancel-button" (click)="hideScorePopup()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
