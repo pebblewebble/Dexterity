@@ -64,6 +64,8 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
   private ants: AntWithText[] = [];
   private vultureSpriteSheet!: Spritesheet;
   private vultures: VultureWithText[] = [];
+  private playerIdleSpriteSheet!: Spritesheet;
+  private spritesheet!: Spritesheet;
 
   // Game state
   public roomId: string = '';
@@ -521,6 +523,10 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
     await playerIdleSpriteSheet.parse();
     await this.antSpriteSheet.parse();
     await this.vultureSpriteSheet.parse();
+
+    // Store these for later use
+    this.spritesheet = spritesheet;
+    this.playerIdleSpriteSheet = playerIdleSpriteSheet;
   }
 
   private createFloor() {
@@ -529,9 +535,9 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
     for (let i = 0; i < 45; i++) {
       let floorTile;
       if (i % 2 == 0) {
-        floorTile = new Sprite(Texture.from('floorTile1'));
+        floorTile = new Sprite(this.spritesheet.textures['floorTile1']);
       } else {
-        floorTile = new Sprite(Texture.from('floorTile2'));
+        floorTile = new Sprite(this.spritesheet.textures['floorTile2']);
       }
       floorTile.x = i * 14;
       floorTile.y = 0; // Set to 0 since we'll position the entire container
@@ -554,15 +560,9 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
     this.players['left'] = leftPlayerContainer;
     this.players['right'] = rightPlayerContainer;
 
-    // Get player idle animations from parsed spritesheet
-    const playerIdleFrames = [];
-    for (let i = 1; i <= 4; i++) {
-      playerIdleFrames.push(Texture.from(`idle${i}`));
-    }
-
-    // Create player animations
-    const leftPlayerAnimation = new AnimatedSprite(playerIdleFrames);
-    const rightPlayerAnimation = new AnimatedSprite(playerIdleFrames);
+    // Create player animations using the parsed spritesheet
+    const leftPlayerAnimation = new AnimatedSprite(this.playerIdleSpriteSheet.animations['idle']);
+    const rightPlayerAnimation = new AnimatedSprite(this.playerIdleSpriteSheet.animations['idle']);
 
     leftPlayerContainer.addChild(leftPlayerAnimation);
     rightPlayerContainer.addChild(rightPlayerAnimation);
