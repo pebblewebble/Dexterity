@@ -204,6 +204,16 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
 
     this.socket = io(environment.apiUrl);
 
+    this.socket?.on('playerReadyUpdate', (data: { playerId: string, ready: boolean }) => {
+      if (this.opponents.length > 0) {
+        const opponent = this.opponents.find(p => p.id === data.playerId);
+        if (opponent) {
+          opponent.ready = data.ready;
+          this.opponentReady = data.ready;
+        }
+      }
+    });
+
     this.socket.on('connect', () => {
       console.log('Connected to server');
       if (this.socket && this.socket.id) {
