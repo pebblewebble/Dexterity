@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Player } from '../interfaces/player.interface';
 import { GameState } from '../interfaces/game-state.interface';
 import { AntEntity } from '../entities/ant.entity';
@@ -361,6 +361,9 @@ export class GameService {
         fullPlayer.accuracy.total++;
         return {
           correct: false,
+          accuracy: fullPlayer.accuracy.total > 0
+            ? Math.round((fullPlayer.accuracy.correct / fullPlayer.accuracy.total) * 100)
+            : 100,
           feedback: key,
           feedbackColor: 0xFF0000
         };
@@ -461,6 +464,8 @@ export class GameService {
         // Incorrect key pressed
         fullPlayer.accuracy.total++;
 
+        Logger.log(fullPlayer.accuracy.total, fullPlayer.accuracy.correct)
+
         return {
           antId: ant.id,
           correct: false,
@@ -507,8 +512,8 @@ export class GameService {
 
     // Check for the starting vulture in a sequence (1, 4, or 7)
     if ([1, 4, 7].includes(vulture.number) &&
-        (!gameState.currentVultureSequences[fullPlayer.id] ||
-         gameState.currentVultureSequences[fullPlayer.id] === -1)) {
+      (!gameState.currentVultureSequences[fullPlayer.id] ||
+        gameState.currentVultureSequences[fullPlayer.id] === -1)) {
 
       gameState.currentVultureSequences[fullPlayer.id] = vulture.number;
       gameState.currentVultureGroups[fullPlayer.id] = vulture.group;
@@ -528,7 +533,7 @@ export class GameService {
 
     // Check if this is the correct vulture in the sequence
     if (vulture.number === gameState.currentVultureSequences[fullPlayer.id] &&
-        vulture.group === gameState.currentVultureGroups[fullPlayer.id]) {
+      vulture.group === gameState.currentVultureGroups[fullPlayer.id]) {
 
       // Correct vulture clicked
       vulture.clicked = true;

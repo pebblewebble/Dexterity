@@ -922,12 +922,14 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
   private updateGameStateFromServer(gameState: any) {
     // This will be a complete game state from the server
     // Update local state to match
+    console.dir(gameState)
 
     // Update player stats
     if (gameState.players[this.playerId]) {
       const player = gameState.players[this.playerId];
       this.playerHealth = player.health;
       this.playerScore = player.score;
+      // this.accuracyText = gameState.
 
       // Update displays
       this.updateHealthDisplay();
@@ -1012,6 +1014,11 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
       // Update local state based on key press result
       if (result.score !== undefined) {
         this.updateScore(result.score);
+      }
+
+      if (result.accuracy !== undefined) {
+
+        this.accuracyText.text = `Accuracy: ${result.accuracy}%`;
       }
 
       // Show typing feedback
