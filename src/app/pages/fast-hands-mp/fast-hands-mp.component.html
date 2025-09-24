@@ -81,13 +81,21 @@
   <!-- Score Popup -->
   <div class="score-popup-overlay" *ngIf="isScorePopupVisible">
     <div class="score-popup" #popupElement>
-      <h2>Game Over!</h2>
+      <h2 *ngIf="gameOutcome === 'win'" class="win-text">You Win!</h2>
+      <h2 *ngIf="gameOutcome === 'lose'" class="lose-text">You Lose!</h2>
 
-      <div class="final-score">
-        <h3>Your Score: {{ formatScore(playerScore) }}</h3>
+      <div class="score-comparison">
+        <div class="score-detail">
+          <span>Your Score</span>
+          <p>{{ formatScore(playerScore) }}</p>
+        </div>
+        <div class="score-detail">
+          <span>Opponent's Score</span>
+          <p>{{ formatScore(opponentFinalScore) }}</p>
+        </div>
       </div>
 
-      <div class="name-input">
+      <!-- <div class="name-input">
         <label for="playerName">Enter your name:</label>
         <input
           type="text"
@@ -96,16 +104,16 @@
           placeholder="Your name"
           maxlength="15"
         />
-      </div>
+      </div> -->
 
       <div class="popup-buttons">
-        <button
+        <!-- <button
           class="submit-button"
           [disabled]="!playerName.trim()"
           (click)="submitScore()"
         >
           Submit Score
-        </button>
+        </button> -->
         <button class="cancel-button" (click)="hideScorePopup()">
           Cancel
         </button>

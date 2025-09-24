@@ -75,6 +75,8 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
   public opponents: Player[] = [];
   public gameStarted: boolean = false;
   private isGameOver: boolean = false;
+  public gameOutcome: string = "";
+  public opponentFinalScore: number = 0;
 
   // Keyboard state tracking
   private keysPressed: { [key: string]: boolean } = {};
@@ -930,6 +932,8 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
     // Update local state to match
     console.dir(gameState)
 
+    this.updateTimer();
+
     // Update player stats
     if (gameState.players[this.playerId]) {
       const player = gameState.players[this.playerId];
@@ -961,8 +965,15 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
 
     // Check for game over
     this.isGameOver = gameState.isGameOver;
-    if (this.isGameOver && !this.isScorePopupVisible) {
+    if (this.isGameOver ) {
       this.showScorePopup();
+      // Instead of showing score popup maybe show the winner
+      if(this.playerHealth>this.opponents[0].health){
+        this.gameOutcome="win";
+      }else{
+        this.gameOutcome="lose";
+      }
+      this.opponentFinalScore=this.opponents[0].score;
     }
   }
 

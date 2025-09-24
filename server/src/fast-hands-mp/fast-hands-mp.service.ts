@@ -147,11 +147,11 @@ export class GameService {
   private getSpawnRate(gameState: GameState): number {
     // Base spawn rates for each difficulty level (in ticks)
     const baseRates = [
-      350,  // Level 1: Every 50 ticks (500ms)
-      200,  // Level 2: Every 40 ticks (400ms)
-      100,  // Level 3: Every 30 ticks (300ms)
-      50,   // Level 4: Every 25 ticks (250ms)
-      25    // Level 5: Every 20 ticks (200ms)
+      100,  
+      50,  
+      25,  
+      10,   
+      5    
     ];
 
     // Get the base rate for current level (array is 0-indexed)
@@ -313,15 +313,6 @@ export class GameService {
     // Check for game over
     if (player.health <= 0) {
       player.health = 0; // Ensure health doesn't go negative
-      this.checkGameOver(gameState);
-    }
-  }
-
-  // Check if the game is over
-  private checkGameOver(gameState: GameState): void {
-    // If all players have no health, game is over
-    const allDead = Object.values(gameState.players).every(player => player.health <= 0);
-    if (allDead) {
       gameState.isGameOver = true;
     }
   }
