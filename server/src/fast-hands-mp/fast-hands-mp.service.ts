@@ -110,7 +110,7 @@ export class GameService {
 
     // Spawn ants if needed
     if (gameState.tickCounter % this.getSpawnRate(gameState) === 0) {
-      this.spawnAnt(gameState);
+      this.spawnAnt(gameState,"none");
     }
 
     // Spawn vultures if needed
@@ -172,9 +172,16 @@ export class GameService {
   }
 
   // Spawn a new ant
-  private spawnAnt(gameState: GameState): void {
+  private spawnAnt(gameState: GameState, direction: string): void {
     // Determine which side to spawn the ant on (alternating)
-    const spawnFromLeft = gameState.antIdCounter % 2 === 0;
+    var spawnFromLeft;
+    if(direction==="none"){
+      spawnFromLeft = gameState.antIdCounter % 2 === 0;
+    }else if(direction==="left"){
+      spawnFromLeft = true;
+    }else{
+      spawnFromLeft = false;
+    }
 
     // Get a random word for this ant
     const word = this.getRandomWord(spawnFromLeft);
@@ -326,6 +333,16 @@ export class GameService {
 
     const fullPlayer = gameState.players[player.id];
     if (!fullPlayer) return null;
+
+    if(key === '1' && fullPlayer.score>=100){
+      if(fullPlayer.position=="left"){
+        this.spawnAnt(gameState,"right");
+      }else{
+        this.spawnAnt(gameState,"left");
+      }
+      fullPlayer.score=fullPlayer.score-100;
+      return null;
+    }
 
     // Ignore special keys like arrows, shift, etc.
     if (key.length !== 1 && key !== 'Backspace') {
