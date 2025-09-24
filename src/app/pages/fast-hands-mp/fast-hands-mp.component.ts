@@ -540,16 +540,20 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
   }
 
   private createFloor() {
-    // We'll create the floor tiles across the entire width
+    this.floorContainer.removeChildren();
     const screenWidth = this.app!.screen.width / 3;
-    for (let i = 0; i < 45; i++) {
+    const tileWidth = 14;
+    const numTiles = Math.ceil(screenWidth / tileWidth);
+
+    for (let i = 0; i < numTiles; i++) {
       let floorTile;
       if (i % 2 == 0) {
         floorTile = new Sprite(this.spritesheet.textures['floorTile1']);
       } else {
         floorTile = new Sprite(this.spritesheet.textures['floorTile2']);
       }
-      floorTile.x = i * 14;
+      // Position tiles side-by-side with no gaps
+      floorTile.x = i * tileWidth;
       floorTile.y = 0; // Set to 0 since we'll position the entire container
       this.floorContainer.addChild(floorTile);
     }
