@@ -582,18 +582,20 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
     leftPlayerAnimation.animationSpeed = 0.13;
     rightPlayerAnimation.animationSpeed = 0.13;
 
-    // Flip right player to face left
-    rightPlayerAnimation.scale.x = -1;
+    leftPlayerAnimation.scale.x = -1;
 
     // Position players
     const bottomPosition = (this.app!.screen.height / 3);
 
+    const centerX = (this.app!.screen.width / 3) / 2;
+    const spacing = 5;
+
     // Position left player at 1/4 of the screen width
-    leftPlayerAnimation.x = (this.app!.screen.width / 3) / 4 - leftPlayerAnimation.width / 2;
+    leftPlayerAnimation.x = centerX - leftPlayerAnimation.width - (spacing / 2);
     leftPlayerAnimation.y = bottomPosition - leftPlayerAnimation.height - 16;
 
     // Position right player at 3/4 of the screen width
-    rightPlayerAnimation.x = 3 * (this.app!.screen.width / 3) / 4 - rightPlayerAnimation.width / 2;
+    rightPlayerAnimation.x = centerX + (spacing / 2);
     rightPlayerAnimation.y = bottomPosition - rightPlayerAnimation.height - 16;
 
     // Store references to player animations
@@ -1463,14 +1465,16 @@ export class FastHandsMpComponent implements OnInit, OnDestroy {
     // Position players
     const leftPlayer = this.playerIdleAnimations['left'];
     const rightPlayer = this.playerIdleAnimations['right'];
+    const centerX = (this.app.screen.width / 3) / 2;
+    const spacing = 50;
 
     if (leftPlayer) {
-      leftPlayer.x = (this.app.screen.width / 3) / 4 - leftPlayer.width / 2;
+      leftPlayer.x = centerX - leftPlayer.width - (spacing / 2);
       leftPlayer.y = bottomPosition - leftPlayer.height - 16;
     }
 
     if (rightPlayer) {
-      rightPlayer.x = 3 * (this.app.screen.width / 3) / 4 - rightPlayer.width / 2;
+      rightPlayer.x = centerX + (spacing / 2);
       rightPlayer.y = bottomPosition - rightPlayer.height - 16;
     }
 
