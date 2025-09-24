@@ -62,6 +62,8 @@ export class GameService {
     // Store the game state
     this.games.set(roomId, gameState);
 
+    console.log("Starting game loop.");
+
     // Start the game loop
     this.startGameLoop(roomId);
   }
@@ -112,16 +114,16 @@ export class GameService {
     }
 
     // Spawn vultures if needed
-    gameState.vultureSpawnCounter++;
-    if (gameState.vultureSpawnCounter >= gameState.nextVultureSpawnTime) {
-      this.spawnVultureGroup(gameState);
-      gameState.vultureSpawnCounter = 0;
+    // gameState.vultureSpawnCounter++;
+    // if (gameState.vultureSpawnCounter >= gameState.nextVultureSpawnTime) {
+    //   this.spawnVultureGroup(gameState);
+    //   gameState.vultureSpawnCounter = 0;
 
-      // Calculate next spawn time based on difficulty
-      const baseSpawnTime = 2000 - (gameState.difficulty.level * 200);
-      const randomVariation = Math.floor(Math.random() * 500) - 250;
-      gameState.nextVultureSpawnTime = Math.max(800, baseSpawnTime + randomVariation);
-    }
+    //   // Calculate next spawn time based on difficulty
+    //   const baseSpawnTime = 2000 - (gameState.difficulty.level * 200);
+    //   const randomVariation = Math.floor(Math.random() * 500) - 250;
+    //   gameState.nextVultureSpawnTime = Math.max(800, baseSpawnTime + randomVariation);
+    // }
   }
 
   // Update game difficulty
@@ -234,7 +236,7 @@ export class GameService {
       const ant = gameState.ants[i];
 
       // Move ants - speed increases with difficulty level
-      const antSpeed = 0.08 * (1 + (gameState.difficulty.level - 1) * 0.2);
+      const antSpeed = 1.25 * (1 + (gameState.difficulty.level - 1) * 0.2);
       ant.x += ant.direction * antSpeed;
 
       // Check if ants have reached a player

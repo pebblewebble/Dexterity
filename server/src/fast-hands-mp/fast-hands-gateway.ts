@@ -26,6 +26,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   // Keep track of all active games by room ID
   private activeGames: Map<string, { players: Map<string, Player>, gameStarted: boolean }> = new Map();
 
+  private updateLoops: Map<string, NodeJS.Timeout> = new Map();
+  private readonly UPDATE_RATE = 50;
+
   constructor(private readonly gameService: GameService) { }
 
   async handleConnection(client: Socket) {
@@ -45,6 +48,13 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
 
         // If no players left, remove the game
         if (game.players.size === 0) {
+          const updateLoop = this.updateLoops.get(roomId);
+          if (updateLoop) {
+            clearInterval(updateLoop);
+            this.updateLoops.delete(roomId);
+            this.logger.log(`Stopped game state update loop for room: ${roomId}`);
+          }
+          
           this.activeGames.delete(roomId);
           this.gameService.stopGame(roomId);
         }
@@ -157,9 +167,20 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(data.roomId).emit('gameStarted', {
         players: Array.from(game.players.values())
       });
+
+      const updateLoop = setInterval(() => {
+        const gameState = this.gameService.getGameState(data.roomId);
+        if (gameState) {
+          // Broadcast the current game state to all clients in the room
+          this.server.to(data.roomId).emit('gameStateUpdate', gameState);
+        }
+      }, this.UPDATE_RATE);
+      
+      this.updateLoops.set(data.roomId, updateLoop);
+      this.logger.log(`Started game state update loop for room: ${data.roomId}`);
     }
 
-    client.to(data.roomId).emit('playerReadyUpdate', {
+    this.server.to(data.roomId).emit('playerReadyUpdate', {
       playerId: client.id,
       ready: player.ready
     });
@@ -182,6 +203,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     const result = this.gameService.handleKeyPress(data.roomId, player, data.key);
 
     // If there's a result, broadcast it to all players in the room
+    Logger.log(result);
     if (result) {
       this.server.to(data.roomId).emit('keyPressResult', {
         playerId: client.id,
